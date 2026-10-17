@@ -1,6 +1,6 @@
 # 🔔 Notification Saver
 
-[![Android CI](https://github.com/EngAnasMuhammad/NotificationSaver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/NotificationSaver/actions/workflows/ci.yml)
+[![Android CI](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-blue.svg?logo=kotlin)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26%20(Android%208.0)-brightgreen.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-orange.svg)
