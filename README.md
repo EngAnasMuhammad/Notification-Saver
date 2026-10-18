@@ -13,8 +13,9 @@
 
 ## ✨ Features
 
-- ⚡ **Automated Local Backup**: Automatically captures incoming status bar notifications silently in the background.
+- ⚡ **Automated Background Backup**: Automatically captures incoming status bar notifications silently in the background, even when the app is closed or swiped away.
 - 🛡️ **Smart Spam & Ghost Filter**: Automatically discards ongoing media players, ongoing system sync events, WhatsApp/Telegram group summary containers, and blank ghost notifications.
+- 🔋 **Battery Optimization Whitelist**: Integrated UI banner detects OEM task killers and routes users to whitelist the app for 100% background reliability.
 - 🎨 **Modern Material 3 UI**: Clean list interface featuring single-line marquee text for long titles, content truncation, and smooth scrolling.
 - ⚡ **Zero-Lag Dynamic Icon Caching**: Thread-safe in-memory caching for app icons preventing UI stutter during fast scrolling.
 - 🗑️ **Management & Bulk Deletion**: Easily delete individual saved notifications or clear the entire database with a single tap.
@@ -34,11 +35,17 @@ How difficult technical challenges were solved in this project:
    * *Problem*: Querying `PackageManager` via Binder IPC for app icons and labels on every frame during fast list scrolling causes severe UI jank and dropped frames.
    * *Solution*: Created a thread-safe `ConcurrentHashMap` memory cache (`AppIconCache`) that queries `PackageManager` at most once per app package lifetime, caching both the extracted `ImageBitmap` and label.
 
-3. **Background Service Reliability & Auto-Rebind**:
-   * *Problem*: Android OS can silently drop `NotificationListenerService` bindings when apps are closed or removed from recent apps.
-   * *Solution*: Overrode `onListenerDisconnected()` to automatically trigger `NotificationListenerService.requestRebind()`, forcing the Android OS system framework to reconnect immediately, coupled with `START_STICKY` and lifecycle-aware coroutine scope management.
+3. **Background Persistence, Auto-Rebind & `onTaskRemoved` Self-Heal**:
+   * *Problem*: Android OS's `NotificationManagerService` can silently drop listener bindings or kill background processes when apps are swiped away from Recents.
+   * *Solution*: 
+     * **Component Toggle Trick (`forceRebind`)**: Utilized `PackageManager.setComponentEnabledSetting` inside `onTaskRemoved()` and `onListenerDisconnected()` to toggle the service state, forcing the Android OS framework to immediately restart and rebind the service.
+     * **Silent Foreground Service (`IMPORTANCE_MIN`)**: Elevated process priority to `FOREGROUND` using `IMPORTANCE_MIN`, preventing Android's Low Memory Killer (LMK) from terminating the service without cluttering the status bar with notification icons.
 
-4. **Robust Spam & Ghost Filtration**:
+4. **Battery Optimization Whitelisting (`ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`)**:
+   * *Problem*: Aggressive OEM battery management (MIUI, ColorOS, OneUI) terminates background services when apps are closed.
+   * *Solution*: Detects optimization state via `PowerManager.isIgnoringBatteryOptimizations()` and displays an actionable Material 3 warning card directing users to whitelist the app with one click.
+
+5. **Robust Spam & Ghost Filtration**:
    * *Problem*: Apps flood the notification stream with ongoing media players, file download progress bars, and invisible parent group summary nodes.
    * *Solution*: Filtered out `sbn.isOngoing`, `NotificationCompat.isGroupSummary()`, self-notifications, and blank ghost events before hitting the persistence layer.
 
@@ -78,7 +85,7 @@ The app strictly follows **Clean Architecture** (`com.anasdev.notificationsaver`
 - **Dependency Injection**: [Hilt](https://dagger.dev/hilt/)
 - **Local Persistence**: [Room Database](https://developer.android.com/training/data-storage/room)
 - **Asynchronous Programming**: [Kotlin Coroutines & StateFlow](https://kotlinlang.org/docs/coroutines-overview.html)
-- **System Integration**: Android `NotificationListenerService` & `PackageManager` API
+- **System Integration**: Android `NotificationListenerService`, `PowerManager`, & `PackageManager` API
 
 ---
 
@@ -103,10 +110,10 @@ The app strictly follows **Clean Architecture** (`com.anasdev.notificationsaver`
    ./gradlew installDebug
    ```
 
-4. **Grant Notification Access Permission**:
+4. **Grant Permissions**:
    - Open the app.
-   - Tap **Open System Settings**.
-   - Enable **Notification Access** for **Notification Saver**.
+   - Tap **Open System Settings** to grant **Notification Access**.
+   - If prompted by the top banner, tap **Fix** to whitelist the app from **Battery Optimization**.
 
 ---
 
@@ -115,10 +122,10 @@ The app strictly follows **Clean Architecture** (`com.anasdev.notificationsaver`
 This repository is equipped with GitHub Actions for automated testing and release deployment:
 
 - **Continuous Integration (`ci.yml`)**: Automatically triggers on pushes and PRs to `main`/`master` to verify Gradle build integrity.
-- **Continuous Deployment (`cd.yml`)**: Triggered when a new git tag is pushed (e.g. `v1.0.5`), automatically building a Release APK and publishing a GitHub Release:
+- **Continuous Deployment (`cd.yml`)**: Triggered when a new git tag is pushed (e.g. `v1.1.0`), automatically building a Release APK and publishing a GitHub Release:
   ```bash
-  git tag v1.0.4
-  git push origin v1.0.4
+  git tag v1.1.0
+  git push origin v1.1.0
   ```
 
 ---
