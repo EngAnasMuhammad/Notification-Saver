@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <application
         android:name=".di.NotificationApplication"
         android:allowBackup="true"
@@ -27,11 +31,14 @@
         <service
             android:name=".data.service.NotificationListenerService"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:foregroundServiceType="specialUse"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
-
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Save user notifications locally for history review" />
         </service>
 
 

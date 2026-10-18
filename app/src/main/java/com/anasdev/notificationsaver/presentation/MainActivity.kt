@@ -26,14 +26,20 @@ class MainActivity : ComponentActivity() {
             NotificationSaverTheme {
                 val viewModel: NotificationViewModel = hiltViewModel()
                 var notificationEnabled by remember { mutableStateOf(viewModel.checkNotificationPermission()) }
+                var batteryOptimized by remember { mutableStateOf(!viewModel.isIgnoringBatteryOptimizations()) }
 
                 LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
                     notificationEnabled = viewModel.checkNotificationPermission()
+                    batteryOptimized = !viewModel.isIgnoringBatteryOptimizations()
                     viewModel.rebindListenerService()
                 }
 
                 if (notificationEnabled) {
-                    NotificationScreen(pm = packageManager, viewModel = viewModel)
+                    NotificationScreen(
+                        pm = packageManager, 
+                        viewModel = viewModel,
+                        isBatteryOptimized = batteryOptimized,
+                    )
                 } else {
                     PermissionScreen()
                 }

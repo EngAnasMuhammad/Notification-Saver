@@ -20,14 +20,14 @@ class NotificationViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     getNotificationsUseCase: GetNotificationsUseCase,
     private val deleteNotificationUseCase: DeleteNotificationUseCase,
-    private val clearAllNotificationsUseCase: ClearAllNotificationsUseCase
+    private val clearAllNotificationsUseCase: ClearAllNotificationsUseCase,
 ) : ViewModel() {
 
     val notifications = getNotificationsUseCase()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     fun deleteNotification(notification: NotificationItem) {
@@ -46,14 +46,14 @@ class NotificationViewModel @Inject constructor(
         return NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
     }
 
+    fun isIgnoringBatteryOptimizations(): Boolean {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
     fun rebindListenerService() {
         if (checkNotificationPermission()) {
-            try {
-                android.service.notification.NotificationListenerService.requestRebind(
-                    android.content.ComponentName(context, com.anasdev.notificationsaver.data.service.NotificationListenerService::class.java)
-                )
-            } catch (_: Exception) {
-            }
+            com.anasdev.notificationsaver.data.service.NotificationListenerService.forceRebind(context)
         }
     }
 }
