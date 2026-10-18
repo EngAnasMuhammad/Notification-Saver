@@ -1,7 +1,7 @@
 # 🔔 Notification Saver
 
 [![Android CI](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-blue.svg?logo=kotlin)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-blue.svg?logo=kotlin)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26%20(Android%208.0)-brightgreen.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-orange.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean%20%2B%20MVVM-purple.svg)
@@ -22,9 +22,31 @@
 
 ---
 
+## 🛠️ Engineering Highlights
+
+How difficult technical challenges were solved in this project:
+
+1. **5-Second SQL Deduplication Window**:
+   * *Problem*: Chat apps and system sync services frequently fire duplicate notification events at the exact same millisecond or trigger redundant updates.
+   * *Solution*: Implemented an optimized SQLite query using a 5-second sliding window (`timestamp >= :timestamp - 5000`) along with indexed columns (`timestamp`, `packageName`) to prevent duplicate database rows while maintaining `O(log N)` query performance.
+
+2. **Zero-Lag `LazyColumn` Icon & Label Caching (`AppIconCache`)**:
+   * *Problem*: Querying `PackageManager` via Binder IPC for app icons and labels on every frame during fast list scrolling causes severe UI jank and dropped frames.
+   * *Solution*: Created a thread-safe `ConcurrentHashMap` memory cache (`AppIconCache`) that queries `PackageManager` at most once per app package lifetime, caching both the extracted `ImageBitmap` and label.
+
+3. **Background Service Reliability & Auto-Rebind**:
+   * *Problem*: Android OS can silently drop `NotificationListenerService` bindings when apps are closed or removed from recent apps.
+   * *Solution*: Overrode `onListenerDisconnected()` to automatically trigger `NotificationListenerService.requestRebind()`, forcing the Android OS system framework to reconnect immediately, coupled with `START_STICKY` and lifecycle-aware coroutine scope management.
+
+4. **Robust Spam & Ghost Filtration**:
+   * *Problem*: Apps flood the notification stream with ongoing media players, file download progress bars, and invisible parent group summary nodes.
+   * *Solution*: Filtered out `sbn.isOngoing`, `NotificationCompat.isGroupSummary()`, self-notifications, and blank ghost events before hitting the persistence layer.
+
+---
+
 ## 🏗️ Architecture & Tech Stack
 
-The app strictly follows **Clean Architecture** principles combined with **MVVM** and **Unidirectional Data Flow (UDF)**:
+The app strictly follows **Clean Architecture** (`com.anasdev.notificationsaver`) combined with **MVVM** and **Unidirectional Data Flow (UDF)**:
 
 ```
           ┌──────────────────────────────────────────────────────────┐
@@ -70,8 +92,8 @@ The app strictly follows **Clean Architecture** principles combined with **MVVM*
 ### Building & Running
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/USER/NotificationSaver.git
-   cd NotificationSaver
+   git clone https://github.com/EngAnasMuhammad/Notification-Saver.git
+   cd Notification-Saver
    ```
 
 2. **Open in Android Studio** and sync Gradle dependencies.
@@ -93,10 +115,10 @@ The app strictly follows **Clean Architecture** principles combined with **MVVM*
 This repository is equipped with GitHub Actions for automated testing and release deployment:
 
 - **Continuous Integration (`ci.yml`)**: Automatically triggers on pushes and PRs to `main`/`master` to verify Gradle build integrity.
-- **Continuous Deployment (`cd.yml`)**: Triggered when a new git tag is pushed (e.g. `v1.0.0`), automatically building a Release APK and publishing a GitHub Release:
+- **Continuous Deployment (`cd.yml`)**: Triggered when a new git tag is pushed (e.g. `v1.0.5`), automatically building a Release APK and publishing a GitHub Release:
   ```bash
-  git tag v1.0.0
-  git push origin v1.0.0
+  git tag v1.0.4
+  git push origin v1.0.4
   ```
 
 ---

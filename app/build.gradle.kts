@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.notificationsaver"
+    namespace = "com.anasdev.notificationsaver"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.notificationsaver"
+        applicationId = "com.anasdev.notificationsaver"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -29,8 +29,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
