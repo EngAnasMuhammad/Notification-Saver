@@ -7,6 +7,8 @@ interface NotificationRepository {
     fun getAllNotifications(): Flow<List<NotificationItem>>
     suspend fun saveNotification(notification: NotificationItem)
     suspend fun deleteNotification(notification: NotificationItem)
+    suspend fun deleteConversation(conversationKey: String)
+    suspend fun deleteAppGroup(packageName: String)
     suspend fun clearAllNotifications()
     suspend fun isDuplicate(packageName: String, title: String, content: String, timestamp: Long): Boolean
 }

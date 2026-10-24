@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">حافظ الإشعارات</string>
+    <string name="theme_system">افتراضي النظام</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_dark">داكن</string>
+    <string name="language_system">افتراضي النظام</string>
+    <string name="language_english">English (الإنجليزية)</string>
+    <string name="language_arabic">العربية (Arabic)</string>
+
+    <!-- Navigation & Titles -->
+    <string name="title_home">الإشعارات</string>
+    <string name="title_settings">الإعدادات</string>
+    <string name="title_blocked_apps">التطبيقات المحظورة</string>
+    <string name="title_app_filter">فلتر إشعارات التطبيقات</string>
+
+    <!-- Settings Categories & Items -->
+    <string name="category_preferences">التفضيلات</string>
+    <string name="category_filtering">التصفية والفلترة</string>
+    <string name="category_privacy">الخصوصية</string>
+    <string name="category_about">حول التطبيق</string>
+
+    <string name="setting_app_theme">مظهر التطبيق</string>
+    <string name="setting_language">اللغة</string>
+    <string name="setting_blocked_apps">التطبيقات المحظورة</string>
+    <string name="setting_blocked_apps_subtitle">استبعاد إشعارات بعض التطبيقات من الحفظ</string>
+    <string name="setting_clear_all">مسح جميع الإشعارات</string>
+    <string name="setting_clear_all_subtitle">حذف جميع الرسائل المحفوظة نهائيًا</string>
+    <string name="setting_licenses">تراخيص المصادر المفتوحة</string>
+
+    <!-- Dialogs & Buttons -->
+    <string name="dialog_clear_all_title">مسح جميع الإشعارات</string>
+    <string name="dialog_clear_all_msg">هل أنت تأكد من أنك تريد حذف جميع الإشعارات المحفوظة؟\n\n لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="dialog_delete_app_title">حذف إشعارات التطبيق</string>
+    <string name="dialog_delete_conversation_title">حذف المحادثة</string>
+    <string name="btn_clear_all">مسح الكل</string>
+    <string name="btn_copy">نسخ</string>
+    <string name="btn_delete">حذف</string>
+    <string name="btn_cancel">إلغاء</string>
+    <string name="btn_close">إغلاق</string>
+    <string name="btn_fix">إصلاح</string>
+    <string name="msg_copied">تم النسخ إلى الحافظة</string>
+
+    <!-- Empty States & Status -->
+    <string name="empty_home">لا توجد إشعارات محفوظة</string>
+    <string name="empty_home_sub">ستظهر الإشعارات الواردة هنا تلقائيًا فور التقاطها.</string>
+    <string name="empty_conversation">لا توجد رسائل في هذه المحادثة</string>
+    <string name="empty_search_apps">لم يتم العثور على تطبيقات</string>
+    <string name="battery_warning_title">تحسين البطارية مفعّل</string>
+    <string name="battery_warning_sub">قد يقوم نظام التشغيل بإنهاء التطبيق في الخلفية. انقر هنا لاستثنائه.</string>
+
+    <string name="status_save">حفظ الإشعارات</string>
+    <string name="status_ignored">الإشعارات متوقفة</string>
+</resources>

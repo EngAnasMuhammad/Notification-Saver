@@ -17,5 +17,7 @@ data class NotificationData(
     val title: String,
     val content: String,
     val timestamp: Long,
-    val notificationKey: String
+    val notificationKey: String,
+    val conversationTitle: String? = null,
+    val senderIconPath: String? = null
 )

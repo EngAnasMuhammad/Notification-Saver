@@ -27,6 +27,16 @@ class NotificationRepositoryImpl @Inject constructor(
         dao.deleteNotification(notification.toEntity())
     }
 
+    override suspend fun deleteConversation(conversationKey: String) {
+        val packageName = conversationKey.substringBefore(':')
+        val title = conversationKey.substringAfter(':')
+        dao.deleteConversationByPackageAndTitle(packageName, title)
+    }
+
+    override suspend fun deleteAppGroup(packageName: String) {
+        dao.deleteAppNotifications(packageName)
+    }
+
     override suspend fun clearAllNotifications() {
         dao.deleteAllNotifications()
     }

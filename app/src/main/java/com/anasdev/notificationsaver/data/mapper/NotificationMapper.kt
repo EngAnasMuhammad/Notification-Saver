@@ -10,7 +10,9 @@ fun NotificationData.toDomainModel(): NotificationItem {
         title = title,
         content = content,
         timestamp = timestamp,
-        notificationKey = notificationKey
+        notificationKey = notificationKey,
+        conversationTitle = conversationTitle,
+        senderIconPath = senderIconPath
     )
 }
 
@@ -21,6 +23,8 @@ fun NotificationItem.toEntity(): NotificationData {
         title = title,
         content = content,
         timestamp = timestamp,
-        notificationKey = notificationKey
+        notificationKey = notificationKey,
+        conversationTitle = conversationTitle,
+        senderIconPath = senderIconPath
     )
 }

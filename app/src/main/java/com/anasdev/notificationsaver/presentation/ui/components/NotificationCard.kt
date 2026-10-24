@@ -1,8 +1,10 @@
 package com.anasdev.notificationsaver.presentation.ui.components
 
 import android.content.pm.PackageManager
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import java.util.Date
 
@@ -35,6 +39,8 @@ import java.util.Date
 fun NotificationCard(
     item: NotificationItem,
     pm: PackageManager,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -47,10 +53,13 @@ fun NotificationCard(
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onToggleExpand() }
+            .animateContentSize(),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -58,24 +67,33 @@ fun NotificationCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Fixed Size App Icon
+            // Sender Avatar or Fallback App Icon
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(36.dp)
             ) {
-                if (appIcon != null) {
+                if (!item.senderIconPath.isNullOrBlank()) {
+                    AsyncImage(
+                        model = item.senderIconPath,
+                        contentDescription = item.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                    )
+                } else if (appIcon != null) {
                     Image(
                         bitmap = appIcon,
                         contentDescription = appLabel,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(4.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .padding(2.dp)
+                            .clip(CircleShape)
                     )
                 } else {
                     Icon(
@@ -84,7 +102,7 @@ fun NotificationCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(8.dp)
+                            .padding(6.dp)
                     )
                 }
             }
@@ -100,12 +118,14 @@ fun NotificationCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = appLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = if (item.title.isNotBlank()) item.title else appLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .basicMarquee()
                     )
                     Text(
                         text = formattedTime,
@@ -114,24 +134,13 @@ fun NotificationCard(
                     )
                 }
 
-                if (item.title.isNotBlank()) {
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee()
-                    )
-                }
-
                 if (item.content.isNotBlank()) {
                     Text(
                         text = item.content,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        maxLines = if (isExpanded) Int.MAX_VALUE else 2,
+                        overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis
                     )
                 }
             }
@@ -139,13 +148,13 @@ fun NotificationCard(
             // Delete Button per item
             IconButton(
                 onClick = onDelete,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(32.dp)
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_delete),
                     contentDescription = "Delete Notification",
                     tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

@@ -16,8 +16,8 @@ android {
         applicationId = "com.anasdev.notificationsaver"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,6 +56,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    debugImplementation(libs.leakcanary)
     ksp(libs.androidx.room.compiler)
 
 
@@ -64,4 +65,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.coil.compose.v270)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences.v130)
+    implementation(libs.appcompat)
 }

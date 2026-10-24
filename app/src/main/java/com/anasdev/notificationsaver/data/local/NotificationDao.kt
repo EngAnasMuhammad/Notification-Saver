@@ -19,8 +19,17 @@ interface NotificationDao {
     @Query("DELETE FROM notifications WHERE id = :id")
     suspend fun deleteNotificationById(id: Long)
 
+    @Query("DELETE FROM notifications WHERE packageName = :packageName AND (conversationTitle = :title OR (:title = 'General' AND (conversationTitle IS NULL OR conversationTitle = '')) OR title = :title)")
+    suspend fun deleteConversationByPackageAndTitle(packageName: String, title: String)
+
+    @Query("DELETE FROM notifications WHERE packageName = :packageName")
+    suspend fun deleteAppNotifications(packageName: String)
+
     @Query("DELETE FROM notifications")
     suspend fun deleteAllNotifications()
+
+    @Query("SELECT DISTINCT packageName FROM notifications")
+    suspend fun getDistinctPackages(): List<String>
 
     @Query("SELECT EXISTS(SELECT 1 FROM notifications WHERE packageName = :packageName AND title = :title AND content = :content AND timestamp >= :timestamp - 5000)")
     suspend fun isNotificationDuplicate(packageName: String, title: String, content: String, timestamp: Long): Boolean
