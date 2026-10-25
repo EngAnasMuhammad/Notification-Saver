@@ -82,7 +82,7 @@ fun AppFilterScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -99,7 +99,7 @@ fun AppFilterScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search apps...") },
+                placeholder = { Text(stringResource(id = R.string.placeholder_search_apps)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Rounded.Search,

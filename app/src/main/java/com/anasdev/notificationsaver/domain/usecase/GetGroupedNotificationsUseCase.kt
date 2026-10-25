@@ -18,20 +18,16 @@ class GetGroupedNotificationsUseCase @Inject constructor(
     }
 
     private fun resolveSenderName(item: NotificationItem): String {
-        // 1. Check if content starts with "SenderName: message"
-        if (item.content.contains(":")) {
-            val candidate = item.content.substringBefore(":").trim()
-            if (candidate.isNotBlank() && candidate.length < 35 && !candidate.equals("General", ignoreCase = true)) {
-                return candidate
-            }
-        }
-
-        // 2. Check if conversationTitle or title contains colon
         val rawTitle = item.conversationTitle?.takeIf { it.isNotBlank() }
             ?: item.title.takeIf { it.isNotBlank() }
             ?: "General"
 
-        val cleanTitle = if (rawTitle.contains(":")) rawTitle.substringAfterLast(":").trim() else rawTitle.trim()
+        val cleanTitle = if (item.packageName == "com.instagram.android" && rawTitle.contains(":")) {
+            rawTitle.substringAfterLast(":").trim()
+        } else {
+            rawTitle.trim()
+        }
+
         return cleanTitle.ifBlank { "General" }
     }
 

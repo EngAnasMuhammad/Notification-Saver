@@ -1,134 +1,122 @@
-# 🔔 Notification Saver V2.0.0
+# 🔔 Notification Saver
 
 [![Android CI](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml)
+![Version](https://img.shields.io/badge/Version-2.0.1-brightgreen.svg)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-blue.svg?logo=kotlin)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26%20(Android%208.0)-brightgreen.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-orange.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean%20%2B%20MVVM-purple.svg)
-![Version](https://img.shields.io/badge/Release-v2.0.0-green.svg)
+![GitHub Release](https://img.shields.io/github/v/release/EngAnasMuhammad/Notification-Saver?color=green&label=Release)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-**Notification Saver** is a modern, lightweight, privacy-first Android application that captures, organizes, and locally backs up incoming notifications across all installed apps. Built with 100% Jetpack Compose following **Clean Architecture** principles.
+**Notification Saver** is a native, offline-first Android application that intercepts, deduplicates, and locally archives incoming status bar notifications. Built with 100% Jetpack Compose and Clean Architecture.
 
 ---
 
-## ✨ Features in V2.0.0
+## ✨ Key Features
 
-- 🗂️ **Master-Detail Navigation & Chat Timeline**:
-  - **Screen 1 (Home)**: 2-level expandable list (App Headers ➔ Conversations). Smooth spring expand/collapse animations.
-  - **Screen 2 (Detail)**: Modern Material 3 Chat Bubble timeline with TopAppBar sender avatars and clean multiline formatting.
-- 🌐 **Per-App Multilingual & RTL Support (Arabic & English)**:
-  - Zero-flashing dynamic locale changes applied instantly via `AppCompatDelegate.setApplicationLocales`.
-  - Full Arabic translation ([`values-ar/strings.xml`](app/src/main/res/values-ar/strings.xml)) with native RTL layout mirror.
-- 🎨 **Dynamic Theme Engine**:
-  - Toggle between **System Default**, **Light**, and **Dark** themes.
-- 🛡️ **App Filter Settings & Blacklist Management**:
-  - Exclude unwanted apps from notification saving using Jetpack DataStore preferences.
-  - Features a live search bar and Material 3 `Switch`es.
-  - **Blacklisted/turned-off apps are pinned directly at the top of the list** for instant toggling.
-  - Instant `< 0.0001 ms` service-layer drop gate (`blockedPackagesCache`).
-- 👆 **Swipe-to-Dismiss & Contextual Menus**:
-  - Right-to-left swipe-to-dismiss on App Groups and Conversations with red action indicators and **Confirmation Dialogs**.
-  - Long-press contextual dropdown menu on chat bubbles for **Copy to Clipboard** (with Toast feedback) and message deletion.
-- 🎯 **Smart 5-Tier Sender Extraction**:
-  - Parses `MessagingStyle` and `Person` bundles to extract actual sender handles, resolving receiver-sender handle mismatches in multi-account apps (like Instagram & WhatsApp).
-- 🔄 **Active Status-Bar Sync on App Launch**:
-  - Scans active status bar notifications on launch/resume (`ON_RESUME`) to catch any messages received while offline.
-- ⚡ **Zero-Lag Memory Caching & Bounds**:
-  - Thread-safe `AppIconCache` and 5-second bounded burst debouncer preventing memory leaks and frame drops.
-- 🔒 **100% Offline-First & Private**:
-  - All notifications remain strictly on your device inside an encrypted local Room SQLite database. Zero network calls or external tracking.
+* **🗂️ Master-Detail Navigation & Chat Timeline**
+    * **Home Screen:** 2-level expandable list (App Groups ➔ Conversations) with Material 3 spring physics.
+    * **Detail Screen:** Chat bubble timeline with TopAppBar sender avatars, multiline formatting, and prefix cleaning.
+* **🛡️ App Blacklist & Real-Time Filtering**
+    * Exclude specific apps from notification capture using Jetpack DataStore.
+    * Live search bar with Material 3 switches and blacklisted apps pinned to the top.
+    * Instant service-layer drop gate (`blockedPackagesCache`).
+* **🌐 Dynamic Per-App Localization (English & Arabic)**
+    * Zero-flashing runtime locale switching via `AppCompatDelegate.setApplicationLocales`.
+    * Complete Arabic localization ([`values-ar/strings.xml`](app/src/main/res/values-ar/strings.xml)) with full RTL layout support.
+* **🎨 Dynamic Material 3 Theming**
+    * Supports **System Default**, **Light**, and **Dark** modes.
+    * Custom dark splash screen (`#1D2328`) with transparent edge-to-edge system bar integration.
+* **👆 Gestures & Contextual Actions**
+    * Swipe-to-dismiss on App Groups and Conversations with confirmation dialogs.
+    * Long-press context menu on chat bubbles to copy text or delete individual messages.
+* **🔒 100% Offline & Private**
+    * All data is stored locally in an indexed Room SQLite database with zero network permissions or external tracking.
 
 ---
 
 ## 🛠️ Engineering Highlights
 
-1. **5-Tier Smart Sender Handle & Avatar Alignment**:
-   * *Problem*: In multi-account apps (e.g. Instagram), notifications format titles as `"ReceiverHandle: SenderHandle"`, causing receiver titles to be paired with sender avatars.
-   * *Solution*: Implemented a 5-tier resolution pipeline inspecting `MessagingStyle.Message`, `EXTRA_MESSAGING_PERSON`, and colon prefixes, strictly aligning the saved sender name with the disk avatar hash.
-
-2. **Zero-Flashing `AppCompatDelegate` Per-App Locale**:
-   * *Problem*: Standard locale changes require manual Activity recreation (`recreate()`), causing jarring white flashes.
-   * *Solution*: Extended `AppCompatActivity` and used `AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))` inside `LaunchedEffect`, adjusting app resources smoothly on the fly.
-
-3. **120 FPS Flattened `LazyColumn` & Spring Motion**:
-   * *Problem*: Nested `LazyColumn`s cause scroll lag and crash the Compose layout engine.
-   * *Solution*: Implemented a single flattened `LazyColumn` with stable keys (`"app_$packageName"`, `"conv_$conversationKey"`) and Material 3 spring physics for fluid inline expansion.
-
-4. **Background Persistence & Auto-Rebind**:
-   * *Problem*: Android OS terminates background services when swiped away from Recents.
-   * *Solution*: Utilized PackageManager component-toggle (`forceRebind`) on `onTaskRemoved()` and `onListenerDisconnected()`, forcing the Android OS framework to restart and rebind the listener service.
+| Challenge                                  | Engineering Solution                                                                                                                                                                                                          |
+|:-------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Multi-Account Sender & Avatar Mismatch** | Built a package-aware extraction pipeline inspecting `MessagingStyle`, `LargeIcon`, and colon prefixes (`"Account: Sender"`), pairing the extracted sender name with a deduplicated `.webp` disk cache (`filesDir/avatars/`). |
+| **Burst & Ghost Notification Duplicates**  | Combined a bounded 5-second `ConcurrentHashMap` in-memory debouncer with an exact-match SQLite check anchored to the original message timestamp (`notification.when`).                                                        |
+| **120 FPS List Virtualization**            | Replaced nested lists with a single flattened `LazyColumn` using stable keys (`app_$packageName`, `conv_$conversationKey`), `contentType` definitions, and an in-memory `AppIconCache`.                                       |
+| **OEM Background Process Termination**     | Elevated `NotificationListenerService` to a silent foreground service (`IMPORTANCE_MIN`) and implemented `PackageManager` component-state toggling (`forceRebind`) on `onTaskRemoved()` and `onListenerDisconnected()`.       |
+| **Missed Offline Notifications**           | Added an active status bar sync (`activeNotifications`) triggered on `ON_RESUME` to capture notifications posted while the service was unbound.                                                                               |
+| **Activity Flashing on Locale Change**     | Extended `AppCompatActivity` and bound `LocaleListCompat` updates to a reactive `StateFlow`, switching between LTR and RTL layouts without manual activity recreation.                                                        |
 
 ---
 
 ## 🏗️ Architecture & Tech Stack
 
-```
+```text
           ┌──────────────────────────────────────────────────────────┐
           │                    Presentation Layer                    │
-          │ Compose UI │ NotificationViewModel │ SettingsViewModel    │
+          │   Compose UI  │  NotificationViewModel  │ SettingsViewModel  │
           └────────────────────────────┬─────────────────────────────┘
                                        │
                                        ▼
           ┌──────────────────────────────────────────────────────────┐
           │                       Domain Layer                       │
-          │ Pure Kotlin Use Cases │ Domain Models │ Repository Interfaces │
+          │  Pure Kotlin Use Cases │ Domain Models │ Repo Contracts  │
           └────────────────────────────▲─────────────────────────────┘
                                        │
                                        ▼
           ┌──────────────────────────────────────────────────────────┐
           │                        Data Layer                        │
-          │ Repositories │ Room Dao │ DataStore │ Listener Service  │
+          │  Repositories │ Room DAO │ DataStore │ Listener Service  │
           └────────────────────────────┬─────────────────────────────┘
                                        │
                                        ▼
-                          ┌────────────────────────┐
-                          │ Room Database (SQLite) │
-                          └────────────────────────┘
+                     ┌───────────────────────────────────┐
+                     │ Room SQLite (v4) & WebP Disk Cache│
+                     └───────────────────────────────────┘
 ```
 
-### Core Libraries & Tools
-- **Language**: [Kotlin 2.4](https://kotlinlang.org/)
-- **UI Framework**: [Jetpack Compose](https://developer.android.com/jetpack/compose) with Material 3
-- **Navigation**: Compose Navigation with Material 3 Motion
-- **Dependency Injection**: [Hilt](https://dagger.dev/hilt/)
-- **Local Persistence**: [Room Database](https://developer.android.com/training/data-storage/room) v4 & [DataStore Preferences](https://developer.android.com/topic/libraries/architecture/datastore)
-- **Image Loading**: [Coil](https://coil-kt.github.io/coil/)
-- **System Integration**: Android `NotificationListenerService`, `AppCompatDelegate`, `PowerManager`, & `PackageManager`
+| Category                 | Technology                                                                                                                                                                                                 |
+|:-------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Language**             | [Kotlin 2.4.21](https://kotlinlang.org/)                                                                                                                                                                   |
+| **UI Framework**         | [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3)                                                                                                                              |
+| **Architecture**         | Clean Architecture + MVVM + Unidirectional Data Flow (UDF)                                                                                                                                                 |
+| **Dependency Injection** | [Dagger Hilt](https://dagger.dev/hilt/)                                                                                                                                                                    |
+| **Local Persistence**    | [Room Database](https://developer.android.com/training/data-storage/room) (v4 with non-destructive migrations) & [Jetpack DataStore](https://developer.android.com/topic/libraries/architecture/datastore) |
+| **Concurrency**          | Kotlin Coroutines & `StateFlow`                                                                                                                                                                            |
+| **Image Loading**        | [Coil Compose](https://coil-kt.github.io/coil/)                                                                                                                                                            |
+| **System APIs**          | `NotificationListenerService`, `AppCompatDelegate`, `PowerManager`, `PackageManager`                                                                                                                       |
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Android Studio Ladybug (2024.2.1) or newer
-- JDK 17
-- Device running **Android 8.0 (API level 26)** or higher
+* Android Studio Ladybug (2024.2.1) or newer
+* JDK 17
+* Android 8.0 (API 26) or higher
 
-### Building & Running
-1. **Clone the repository**:
+### Installation
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/EngAnasMuhammad/Notification-Saver.git
+   git clone [https://github.com/EngAnasMuhammad/Notification-Saver.git](https://github.com/EngAnasMuhammad/Notification-Saver.git)
    cd Notification-Saver
    ```
-
-2. **Build Debug APK**:
+2. **Build and install the debug APK:**
    ```bash
    ./gradlew installDebug
    ```
-
-3. **Grant Permissions**:
-   - Open the app and grant **Notification Access**.
-   - Tap **Fix** on the top banner to whitelist the app from **Battery Optimization**.
+3. **Configure permissions on launch:**
+    * Grant **Notification Listener Access** when prompted.
+    * Tap **Fix** on the warning banner to exempt the app from **Battery Optimization**.
 
 ---
 
-## 🔄 CI/CD Pipelines
+## 🔄 CI/CD Workflow
 
-- **Continuous Integration (`ci.yml`)**: Builds `./gradlew assembleDebug` on pushes/PRs to `main`/`master`.
-- **Continuous Deployment (`cd.yml`)**: Triggered when a version tag (`v*`) is pushed, building a Release APK and creating a GitHub Release:
+* **Continuous Integration (`ci.yml`):** Runs `./gradlew assembleDebug` on every push and pull request to `main`/`master`.
+* **Continuous Deployment (`cd.yml`):** Automatically builds a signed release APK (`./gradlew assembleRelease`) and publishes a GitHub Release when a version tag (`v*`) is pushed:
   ```bash
-  git tag -a v2.0.0 -m "Release v2.0.0"
+  git tag -a v2.0.1 -m "Release v2.0.1"
   git push origin master --tags
   ```
 
@@ -139,11 +127,11 @@
 ```text
 MIT License
 
-Copyright (c) 2026 Anas
+Copyright (c) 2026 Anas Muhammad
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction rights, including without limitation the rights
+in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:

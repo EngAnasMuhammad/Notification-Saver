@@ -32,23 +32,41 @@
     <string name="dialog_clear_all_title">مسح جميع الإشعارات</string>
     <string name="dialog_clear_all_msg">هل أنت تأكد من أنك تريد حذف جميع الإشعارات المحفوظة؟\n\n لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="dialog_delete_app_title">حذف إشعارات التطبيق</string>
+    <string name="dialog_delete_app_msg">هل أنت تأكد من أنك تريد حذف جميع الإشعارات المحفوظة للتطبيق %1$s؟</string>
     <string name="dialog_delete_conversation_title">حذف المحادثة</string>
+    <string name="dialog_delete_conversation_msg">هل أنت تأكد من أنك تريد حذف جميع الرسائل الخاصة بالمحادثة \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="licenses_msg">تم بناء تطبيق حافظ الإشعارات باستعمال برمجيات مفتوحة المصدر:\n\n• Jetpack Compose &amp; Material 3 (Apache 2.0)\n• Hilt &amp; Room Database (Apache 2.0)\n• Coil Image Loader (Apache 2.0)</string>
+
     <string name="btn_clear_all">مسح الكل</string>
     <string name="btn_copy">نسخ</string>
     <string name="btn_delete">حذف</string>
     <string name="btn_cancel">إلغاء</string>
     <string name="btn_close">إغلاق</string>
+    <string name="btn_back">رجوع</string>
     <string name="btn_fix">إصلاح</string>
+    <string name="btn_open_settings">فتح إعدادات النظام</string>
     <string name="msg_copied">تم النسخ إلى الحافظة</string>
+    <string name="placeholder_search_apps">البحث في التطبيقات…</string>
+
+    <!-- App Header Summary Plurals -->
+    <string name="summary_conversations_one">محادثة واحدة (%1$d)</string>
+    <string name="summary_conversations_other">%1$d محادثات</string>
+    <string name="summary_messages_one">رسالة واحدة (%1$d)</string>
+    <string name="summary_messages_other">%1$d رسائل</string>
+    <string name="summary_app_header_sub">%1$s • %2$s</string>
 
     <!-- Empty States & Status -->
     <string name="empty_home">لا توجد إشعارات محفوظة</string>
     <string name="empty_home_sub">ستظهر الإشعارات الواردة هنا تلقائيًا فور التقاطها.</string>
     <string name="empty_conversation">لا توجد رسائل في هذه المحادثة</string>
     <string name="empty_search_apps">لم يتم العثور على تطبيقات</string>
+    <string name="permission_title">الوصول إلى الإشعارات مطلوب</string>
+    <string name="permission_sub">لحفظ الإشعارات الواردة وعرضها، يُرجى منح إذن الوصول إلى الإشعارات في إعدادات النظام.</string>
     <string name="battery_warning_title">تحسين البطارية مفعّل</string>
     <string name="battery_warning_sub">قد يقوم نظام التشغيل بإنهاء التطبيق في الخلفية. انقر هنا لاستثنائه.</string>
 
     <string name="status_save">حفظ الإشعارات</string>
     <string name="status_ignored">الإشعارات متوقفة</string>
+    <string name="service_notification_title">حافظ الإشعارات نشط</string>
+    <string name="service_notification_sub">حفظ الإشعارات الواردة في الخلفية</string>
 </resources>

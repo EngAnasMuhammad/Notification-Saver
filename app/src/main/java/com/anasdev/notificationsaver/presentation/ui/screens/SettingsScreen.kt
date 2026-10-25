@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.anasdev.notificationsaver.BuildConfig
 import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.presentation.state.SettingsViewModel
 import com.anasdev.notificationsaver.presentation.ui.components.LanguageSelectionDialog
@@ -106,7 +107,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showLicensesDialog = false },
             title = { Text(stringResource(id = R.string.setting_licenses)) },
-            text = { Text("Notification Saver is built with open source software:\n\n• Jetpack Compose & Material 3 (Apache 2.0)\n• Hilt & Room Database (Apache 2.0)\n• Coil Image Loader (Apache 2.0)") },
+            text = { Text(stringResource(id = R.string.licenses_msg)) },
             confirmButton = {
                 TextButton(onClick = { showLicensesDialog = false }) {
                     Text(stringResource(id = R.string.btn_close))
@@ -129,13 +130,13 @@ fun SettingsScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.btn_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -230,7 +231,7 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    text = stringResource(id = R.string.app_name) +" V1.1.0",
+                    text = "${stringResource(id = R.string.app_name)} V${BuildConfig.VERSION_NAME}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

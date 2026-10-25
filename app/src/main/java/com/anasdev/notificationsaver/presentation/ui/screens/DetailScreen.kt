@@ -1,5 +1,8 @@
 package com.anasdev.notificationsaver.presentation.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -46,10 +49,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -168,7 +169,7 @@ fun DetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -236,7 +237,6 @@ fun ChatBubbleItem(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     var showMenu by remember { mutableStateOf(false) }
 
     val formattedTime = remember(item.timestamp) {
@@ -303,7 +303,10 @@ fun ChatBubbleItem(
                     },
                     onClick = {
                         showMenu = false
-                        clipboardManager.setText(AnnotatedString(displayContent))
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("Notification Message", displayContent)
+                        @Suppress("UsePropertyAccessSyntax")
+                        clipboard.setPrimaryClip(clip)
                         Toast.makeText(context, msgCopiedText, Toast.LENGTH_SHORT).show()
                     }
                 )
@@ -327,38 +330,37 @@ fun ChatBubbleItem(
 }
 
 private fun cleanMessageContent(
-    content: String,
+    rawContent: String,
     conversationTitle: String,
-    itemTitle: String,
+    itemTitle: String
 ): String {
-    var text = content.trim()
+    if (rawContent.isBlank()) return rawContent
 
-    // 1. Remove prefixes matching conversationTitle or itemTitle
-    val prefixes = listOf(
-        conversationTitle.trim(),
-        itemTitle.trim()
-    ).filter { it.isNotBlank() && !it.equals("General", ignoreCase = true) }
+    val senders = listOf(conversationTitle.trim(), itemTitle.trim())
+        .filter { it.isNotBlank() && !it.equals("General", ignoreCase = true) }
+        .distinct()
 
-    for (prefix in prefixes) {
-        if (text.startsWith(prefix, ignoreCase = true)) {
-            text = text.substring(prefix.length).trim()
-            if (text.startsWith(":") || text.startsWith("-") || text.startsWith("–")) {
-                text = text.substring(1).trim()
+    var text = rawContent.trim()
+
+    for (sender in senders) {
+        val prefixWithSpace = "$sender: "
+        val prefixWithoutSpace = "$sender:"
+
+        val cleaned = when {
+            text.startsWith(prefixWithSpace, ignoreCase = true) -> {
+                text.substring(prefixWithSpace.length).trim()
             }
+            text.startsWith(prefixWithoutSpace, ignoreCase = true) -> {
+                text.substring(prefixWithoutSpace.length).trim()
+            }
+            else -> text
+        }
+
+        if (cleaned.isNotBlank()) {
+            text = cleaned
+            break // Cleaned strictly once
         }
     }
 
-    // 2. If content contains a colon, check if text before colon matches sender name
-    if (text.contains(":")) {
-        val prefixBeforeColon = text.substringBefore(":").trim()
-        if (prefixBeforeColon.isNotBlank() &&
-            (prefixBeforeColon.equals(conversationTitle.trim(), ignoreCase = true) ||
-             prefixBeforeColon.equals(itemTitle.trim(), ignoreCase = true) ||
-             conversationTitle.contains(prefixBeforeColon, ignoreCase = true))
-        ) {
-            text = text.substringAfter(":").trim()
-        }
-    }
-
-    return text.ifBlank { content }
+    return text.ifBlank { rawContent }
 }

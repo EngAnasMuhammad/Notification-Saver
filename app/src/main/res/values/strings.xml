@@ -29,25 +29,43 @@
 
     <!-- Dialogs & Buttons -->
     <string name="dialog_clear_all_title">Clear All Notifications</string>
-    <string name="dialog_clear_all_msg">Are you sure you want to delete all saved notifications? This action cannot be undone.</string>
+    <string name="dialog_clear_all_msg">Are you sure you want to delete all saved notifications? \n\nThis action cannot be undone.</string>
     <string name="dialog_delete_app_title">Delete App Notifications</string>
+    <string name="dialog_delete_app_msg">Are you sure you want to delete all saved notifications for %1$s?</string>
     <string name="dialog_delete_conversation_title">Delete Conversation</string>
+    <string name="dialog_delete_conversation_msg">Are you sure you want to delete all messages for \"%1$s\"? This action cannot be undone.</string>
+    <string name="licenses_msg">Notification Saver is built with open source software:\n\n• Jetpack Compose &amp; Material 3 (Apache 2.0)\n• Hilt &amp; Room Database (Apache 2.0)\n• Coil Image Loader (Apache 2.0)</string>
+
     <string name="btn_clear_all">Clear All</string>
     <string name="btn_copy">Copy</string>
     <string name="btn_delete">Delete</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_close">Close</string>
+    <string name="btn_back">Back</string>
     <string name="btn_fix">Fix</string>
+    <string name="btn_open_settings">Open System Settings</string>
     <string name="msg_copied">Copied to clipboard</string>
+    <string name="placeholder_search_apps">Search apps…</string>
+
+    <!-- App Header Summary Plurals -->
+    <string name="summary_conversations_one">%1$d conversation</string>
+    <string name="summary_conversations_other">%1$d conversations</string>
+    <string name="summary_messages_one">%1$d message</string>
+    <string name="summary_messages_other">%1$d messages</string>
+    <string name="summary_app_header_sub">%1$s • %2$s</string>
 
     <!-- Empty States & Status -->
     <string name="empty_home">No Saved Notifications</string>
     <string name="empty_home_sub">Incoming notifications will automatically appear here once captured.</string>
     <string name="empty_conversation">No Messages in Conversation</string>
     <string name="empty_search_apps">No Apps Found</string>
+    <string name="permission_title">Notification Access Required</string>
+    <string name="permission_sub">To save and view incoming notifications, please grant Notification Access permission in system settings.</string>
     <string name="battery_warning_title">Battery Optimization Enabled</string>
     <string name="battery_warning_sub">The OS may kill this app in the background. Tap here to whitelist it.</string>
 
     <string name="status_save">Save Notifications</string>
     <string name="status_ignored">Notifications Ignored</string>
+    <string name="service_notification_title">Notification Saver Active</string>
+    <string name="service_notification_sub">Saving incoming notifications in background</string>
 </resources>

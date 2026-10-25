@@ -7,13 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.anasdev.notificationsaver.domain.model.AppNotificationGroup
 import com.anasdev.notificationsaver.domain.model.ConversationSummary
 import com.anasdev.notificationsaver.domain.model.NotificationItem
-import com.anasdev.notificationsaver.domain.usecase.ClearAllNotificationsUseCase
-import com.anasdev.notificationsaver.domain.usecase.DeleteAppGroupUseCase
-import com.anasdev.notificationsaver.domain.usecase.DeleteConversationUseCase
-import com.anasdev.notificationsaver.domain.usecase.DeleteNotificationUseCase
-import com.anasdev.notificationsaver.domain.usecase.GetConversationHistoryUseCase
-import com.anasdev.notificationsaver.domain.usecase.GetGroupedNotificationsUseCase
-import com.anasdev.notificationsaver.domain.usecase.GetRecentConversationsUseCase
+import com.anasdev.notificationsaver.domain.usecase.NotificationUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -23,21 +17,21 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed interface GroupedUiState {
+    data object Loading : GroupedUiState
+    data class Success(val groups: List<AppNotificationGroup>) : GroupedUiState
+}
+
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    getGroupedNotificationsUseCase: GetGroupedNotificationsUseCase,
-    getRecentConversationsUseCase: GetRecentConversationsUseCase,
-    private val getConversationHistoryUseCase: GetConversationHistoryUseCase,
-    private val deleteNotificationUseCase: DeleteNotificationUseCase,
-    private val deleteConversationUseCase: DeleteConversationUseCase,
-    private val deleteAppGroupUseCase: DeleteAppGroupUseCase,
-    private val clearAllNotificationsUseCase: ClearAllNotificationsUseCase,
+    private val useCases: NotificationUseCases,
 ) : ViewModel() {
 
     private val _expandedApps = MutableStateFlow<Set<String>>(emptySet())
@@ -46,15 +40,16 @@ class NotificationViewModel @Inject constructor(
     private val _selectedConversationKey = MutableStateFlow<String?>(null)
     val selectedConversationKey: StateFlow<String?> = _selectedConversationKey.asStateFlow()
 
-    val groupedNotifications: StateFlow<List<AppNotificationGroup>> = getGroupedNotificationsUseCase()
+    val groupedUiState: StateFlow<GroupedUiState> = useCases.getGroupedNotifications()
+        .map { GroupedUiState.Success(it) }
         .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList(),
+            initialValue = GroupedUiState.Loading,
         )
 
-    val recentConversations: StateFlow<List<ConversationSummary>> = getRecentConversationsUseCase()
+    val recentConversations: StateFlow<List<ConversationSummary>> = useCases.getRecentConversations()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -76,25 +71,25 @@ class NotificationViewModel @Inject constructor(
     }
 
     fun getConversationHistory(conversationKey: String): Flow<List<NotificationItem>> {
-        return getConversationHistoryUseCase(conversationKey)
+        return useCases.getConversationHistory(conversationKey)
     }
 
     fun deleteNotification(notification: NotificationItem) {
         viewModelScope.launch {
-            deleteNotificationUseCase(notification)
+            useCases.deleteNotification(notification)
         }
     }
 
     fun deleteConversation(conversationKey: String) {
         viewModelScope.launch {
-            deleteConversationUseCase(conversationKey)
+            useCases.deleteConversation(conversationKey)
         }
     }
 
     fun deleteAppGroup(packageName: String) {
         _expandedApps.update { current -> current - packageName }
         viewModelScope.launch {
-            deleteAppGroupUseCase(packageName)
+            useCases.deleteAppGroup(packageName)
         }
     }
 
@@ -102,7 +97,7 @@ class NotificationViewModel @Inject constructor(
         _expandedApps.value = emptySet()
         _selectedConversationKey.value = null
         viewModelScope.launch {
-            clearAllNotificationsUseCase()
+            useCases.clearAllNotifications()
         }
     }
 

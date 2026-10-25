@@ -24,9 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.anasdev.notificationsaver.R
 
 @Composable
 fun PermissionScreen() {
@@ -60,7 +62,7 @@ fun PermissionScreen() {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Notification Access Required",
+            text = stringResource(id = R.string.permission_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -70,7 +72,7 @@ fun PermissionScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "To save and view incoming notifications, please grant Notification Access permission in system settings.",
+            text = stringResource(id = R.string.permission_sub),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -86,7 +88,7 @@ fun PermissionScreen() {
                 .height(50.dp)
         ) {
             Text(
-                text = "Open System Settings",
+                text = stringResource(id = R.string.btn_open_settings),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )

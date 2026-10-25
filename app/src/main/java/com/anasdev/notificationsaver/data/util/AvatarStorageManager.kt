@@ -12,6 +12,7 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.graphics.createBitmap
 
 @Singleton
 class AvatarStorageManager @Inject constructor() {
@@ -30,14 +31,14 @@ class AvatarStorageManager @Inject constructor() {
             } else {
                 val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 128
                 val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 128
-                val b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val b = createBitmap(width, height)
                 val canvas = Canvas(b)
                 drawable.setBounds(0, 0, canvas.width, canvas.height)
                 drawable.draw(canvas)
                 b
             }
 
-            val avatarsDir = File(context.filesDir, "avatars")
+            val avatarsDir = File(context.filesDir, "avatars_v2")
             if (!avatarsDir.exists()) {
                 avatarsDir.mkdirs()
             }

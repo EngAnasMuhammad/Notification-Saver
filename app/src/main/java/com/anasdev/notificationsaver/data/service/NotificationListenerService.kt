@@ -3,17 +3,15 @@ package com.anasdev.notificationsaver.data.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Person
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
-import android.os.Build
-import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
+import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.data.util.AvatarStorageManager
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.domain.usecase.GetBlacklistedAppsUseCase
@@ -111,8 +109,8 @@ class NotificationListenerService : NotificationListenerService() {
             manager.createNotificationChannel(channel)
 
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Notification Saver Active")
-                .setContentText("Saving incoming notifications in background")
+                .setContentTitle(getString(R.string.service_notification_title))
+                .setContentText(getString(R.string.service_notification_sub))
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setOngoing(true)
@@ -174,59 +172,103 @@ class NotificationListenerService : NotificationListenerService() {
     }
 
     private fun extractSenderName(
+        packageName: String,
         notification: Notification,
         rawTitle: String,
         rawText: String,
         rawBigText: String,
         rawConversationTitle: String?
     ): String {
-        // 1. NotificationCompat MessagingStyle
+        // Step A — Instagram Specific Handling
+        if (packageName == "com.instagram.android") {
+            try {
+                val messagingStyle = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification)
+                if (messagingStyle != null) {
+                    val myName = messagingStyle.user.name?.toString()?.trim()
+                    val senderName = messagingStyle.messages.lastOrNull()?.person?.name?.toString()?.trim()
+                    if (!senderName.isNullOrBlank() && senderName != myName && !senderName.equals("General", ignoreCase = true)) {
+                        return senderName
+                    }
+                }
+            } catch (_: Exception) {}
+
+            val cleanTitle = rawTitle.trim()
+            if (cleanTitle.contains(":")) {
+                val sender = cleanTitle.substringAfterLast(":").trim()
+                if (sender.isNotBlank()) {
+                    return sender
+                }
+            }
+
+            val textToScan = if (rawBigText.isNotBlank()) rawBigText.trim() else rawText.trim()
+            if (textToScan.contains(":")) {
+                val prefix = textToScan.substringBefore(":").trim()
+                val isNotUrl = !prefix.contains("http", ignoreCase = true)
+                val isNotClockTime = !prefix.matches(Regex(".*\\d+:\\d+.*"))
+                if (prefix.isNotBlank() && prefix.length in 1..30 && isNotUrl && isNotClockTime && !prefix.equals("General", ignoreCase = true)) {
+                    return prefix
+                }
+            }
+
+            return cleanTitle.ifBlank { "General" }
+        }
+
+        // Step B — Standard MessagingStyle Apps (Telegram, WhatsApp, Signal, SMS, Discord, etc.)
         try {
             val messagingStyle = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification)
             if (messagingStyle != null) {
-                val lastMsg = messagingStyle.messages.lastOrNull()
-                val msgSender = lastMsg?.person?.name?.toString()?.trim()
-                    ?: lastMsg?.sender?.toString()?.trim()
-                if (!msgSender.isNullOrBlank() && !msgSender.equals("General", ignoreCase = true)) {
-                    return msgSender
+                // Group or Channel Check (keeps Telegram Channels and WhatsApp Groups under channel/group title)
+                val convTitle = messagingStyle.conversationTitle?.toString()?.trim()
+                if (!convTitle.isNullOrBlank()) {
+                    return convTitle
+                }
+
+                // 1-on-1 Direct Message Check
+                val myName = messagingStyle.user.name?.toString()?.trim()
+                val lastSender = messagingStyle.messages.lastOrNull()?.person?.name?.toString()?.trim()
+                if (!lastSender.isNullOrBlank() && lastSender != myName) {
+                    return lastSender
                 }
             }
         } catch (_: Exception) {}
 
-        // 2. Person object from EXTRA_MESSAGING_PERSON
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            try {
-                val person = getPersonFromBundle(notification.extras)
-                val personName = person?.name?.toString()?.trim()
-                if (!personName.isNullOrBlank() && !personName.equals("General", ignoreCase = true)) {
-                    return personName
+        if (!rawConversationTitle.isNullOrBlank()) {
+            return rawConversationTitle.trim()
+        }
+
+        // Step C — All Other Apps (System, Games, Utilities) - No colon splitting to preserve clock times like "10:30"
+        return rawTitle.trim().ifBlank { "General" }
+    }
+
+    private fun extractAvatarIcon(notification: Notification): Icon? {
+        // Priority 1: LargeIcon (Telegram channels/groups/DMs, WhatsApp, Instagram avatar)
+        val largeIcon = notification.getLargeIcon()
+        if (largeIcon != null) {
+            return largeIcon
+        }
+
+        // Priority 2: MessagingStyle last sender icon (ensuring it is NOT the device owner / self)
+        try {
+            val messagingStyle = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification)
+            if (messagingStyle != null) {
+                val myName = messagingStyle.user.name?.toString()?.trim()
+                val lastSender = messagingStyle.messages.lastOrNull()?.person
+                if (lastSender != null) {
+                    val senderName = lastSender.name?.toString()?.trim()
+                    if (senderName != null && senderName != myName) {
+                        val iconCompat = lastSender.icon
+                        if (iconCompat != null) {
+                            return iconCompat.toIcon(this)
+                        }
+                    }
                 }
-            } catch (_: Exception) {}
-        }
-
-        // 3. Sender before colon in EXTRA_TEXT / EXTRA_BIG_TEXT (e.g. "am_dhl11: Sent you a photo")
-        val textToScan = if (rawBigText.isNotBlank()) rawBigText.trim() else rawText.trim()
-        if (textToScan.contains(":")) {
-            val candidate = textToScan.substringBefore(":").trim()
-            if (candidate.isNotBlank() && candidate.length < 35 && !candidate.equals("General", ignoreCase = true)) {
-                return candidate
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        // 4. Sender after colon in EXTRA_CONVERSATION_TITLE or EXTRA_TITLE (e.g. "a24m51: am_dhl11")
-        val titleToScan = if (!rawConversationTitle.isNullOrBlank()) rawConversationTitle.trim() else rawTitle.trim()
-        if (titleToScan.contains(":")) {
-            val candidate = titleToScan.substringAfterLast(":").trim()
-            if (candidate.isNotBlank()) {
-                return candidate
-            }
-        }
-
-        if (titleToScan.isNotBlank()) {
-            return titleToScan
-        }
-
-        return "General"
+        // Fallback: Return null (NEVER fall back to EXTRA_MESSAGING_PERSON / device owner "Me")
+        return null
     }
 
     private fun processAndSaveNotification(sbn: StatusBarNotification) {
@@ -238,7 +280,6 @@ class NotificationListenerService : NotificationListenerService() {
         }
 
         val notification = sbn.notification
-        val postTime = sbn.postTime
         val notificationKey = sbn.key ?: ""
 
         // Exclude ongoing (foreground services/media controls), group summaries, non-clearable, and self-app notifications
@@ -255,7 +296,7 @@ class NotificationListenerService : NotificationListenerService() {
         val rawBigText = notification.extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
         val rawConversationTitle = notification.extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()?.trim()
 
-        val senderName = extractSenderName(notification, rawTitle, rawText, rawBigText, rawConversationTitle)
+        val senderName = extractSenderName(packageName, notification, rawTitle, rawText, rawBigText, rawConversationTitle)
         val conversationTitle = senderName.ifBlank { "General" }
         val title = senderName.ifBlank { rawTitle.trim().ifBlank { "General" } }
 
@@ -263,19 +304,15 @@ class NotificationListenerService : NotificationListenerService() {
 
         if (title.isBlank() && content.isBlank()) return
 
-        // Pre-clean content if it starts with "a24m51: am_dhl11:" or "am_dhl11:"
-        if (content.isNotBlank() && rawTitle.isNotBlank() && content.startsWith(rawTitle, ignoreCase = true)) {
-            content = content.substring(rawTitle.length).trim()
-            if (content.startsWith(":") || content.startsWith("-") || content.startsWith("–")) {
-                content = content.substring(1).trim()
-            }
+        // Single-prefix cleanup at ingestion time
+        val prefixWithSpace = "$senderName: "
+        val prefixWithoutSpace = "$senderName:"
+        val cleanedContent = when {
+            content.startsWith(prefixWithSpace, ignoreCase = true) -> content.substring(prefixWithSpace.length).trim()
+            content.startsWith(prefixWithoutSpace, ignoreCase = true) -> content.substring(prefixWithoutSpace.length).trim()
+            else -> content
         }
-        if (content.isNotBlank() && content.startsWith(senderName, ignoreCase = true)) {
-            content = content.substring(senderName.length).trim()
-            if (content.startsWith(":") || content.startsWith("-") || content.startsWith("–")) {
-                content = content.substring(1).trim()
-            }
-        }
+        content = cleanedContent.ifBlank { content }
 
         val dedupKey = Objects.hash(packageName, title, content)
         val now = System.currentTimeMillis()
@@ -289,11 +326,10 @@ class NotificationListenerService : NotificationListenerService() {
         }
         recentNotificationsCache[dedupKey] = now
 
-        val largeIcon: Icon? = notification.getLargeIcon()
-        val personIcon: Icon? = if (largeIcon == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getPersonFromBundle(notification.extras)?.icon
-        } else null
-        val avatarIcon: Icon? = largeIcon ?: personIcon
+        // Extract avatar Icon strictly following Priority 1 (getLargeIcon) -> Priority 2 (MessagingStyle lastSender != me) -> null
+        val avatarIcon: Icon? = extractAvatarIcon(notification)
+
+        val originalMessageTime = if (notification.`when` > 0L) notification.`when` else sbn.postTime
 
         serviceScope.launch {
             val senderIconPath = if (avatarIcon != null && conversationTitle.isNotBlank()) {
@@ -309,22 +345,12 @@ class NotificationListenerService : NotificationListenerService() {
                 packageName = packageName,
                 title = title,
                 content = content,
-                timestamp = postTime,
+                timestamp = originalMessageTime,
                 notificationKey = notificationKey,
                 conversationTitle = conversationTitle,
                 senderIconPath = senderIconPath,
             )
             saveNotificationUseCase(item)
-        }
-    }
-
-    @androidx.annotation.RequiresApi(Build.VERSION_CODES.P)
-    private fun getPersonFromBundle(extras: Bundle): Person? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getParcelable(Notification.EXTRA_MESSAGING_PERSON, Person::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getParcelable(Notification.EXTRA_MESSAGING_PERSON) as? Person
         }
     }
 }
