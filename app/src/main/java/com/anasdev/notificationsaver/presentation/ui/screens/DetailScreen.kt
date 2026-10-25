@@ -3,11 +3,12 @@ package com.anasdev.notificationsaver.presentation.ui.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +20,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -32,6 +35,7 @@ import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,10 +52,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,6 +76,10 @@ import com.anasdev.notificationsaver.presentation.ui.components.AppIconCache
 import com.anasdev.notificationsaver.presentation.ui.components.timeFormatter
 import java.io.File
 import java.util.Date
+
+private val STRICT_WEB_LINK_REGEX = Regex(
+    "(?i)\\b(?:https?://|ftps?://|www\\.)[a-zA-Z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,6 +107,10 @@ fun DetailScreen(
         AppIconCache.getAppInfo(packageName, pm)
     }
 
+    val isAppLaunchable = remember(packageName) {
+        context.packageManager.getLaunchIntentForPackage(packageName) != null
+    }
+
     val senderIconPath = remember(notifications) {
         notifications.firstOrNull { !it.senderIconPath.isNullOrBlank() }?.senderIconPath
     }
@@ -104,6 +124,8 @@ fun DetailScreen(
                 .build()
         }
     }
+
+    val cannotOpenAppText = stringResource(id = R.string.cannot_open_app)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -168,6 +190,40 @@ fun DetailScreen(
                         )
                     }
                 },
+                actions = {
+                    if (isAppLaunchable) {
+                        FilledTonalButton(
+                            onClick = {
+                                val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                if (launchIntent != null) {
+                                    try {
+                                        context.startActivity(launchIntent)
+                                    } catch (_: Exception) {
+                                        Toast.makeText(context, cannotOpenAppText, Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    Toast.makeText(context, cannotOpenAppText, Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.padding(end = 8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(id = R.string.open_app),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -228,7 +284,47 @@ fun DetailScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun rememberLinkifiedText(text: String, isDark: Boolean): AnnotatedString {
+    val uriHandler = LocalUriHandler.current
+    val linkColor = if (isDark) Color(0xFF64B5F6) else Color(0xFF2196F3)
+
+    return remember(text, isDark) {
+        buildAnnotatedString {
+            append(text)
+            STRICT_WEB_LINK_REGEX.findAll(text).forEach { match ->
+                val start = match.range.first
+                val rawUrl = match.value.trimEnd('.', ',', ')', ']', '}', ':', ';')
+                if (rawUrl.isBlank()) return@forEach
+                val actualEnd = start + rawUrl.length
+
+                val normalizedUrl = if (rawUrl.startsWith("www.", ignoreCase = true)) {
+                    "https://$rawUrl"
+                } else {
+                    rawUrl
+                }
+
+                val link = LinkAnnotation.Url(
+                    url = normalizedUrl,
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            color = linkColor,
+                            textDecoration = TextDecoration.Underline,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    ),
+                    linkInteractionListener = {
+                        try {
+                            uriHandler.openUri(normalizedUrl)
+                        } catch (_: Exception) {}
+                    }
+                )
+                addLink(link, start, actualEnd)
+            }
+        }
+    }
+}
+
 @Composable
 fun ChatBubbleItem(
     item: NotificationItem,
@@ -247,6 +343,8 @@ fun ChatBubbleItem(
         cleanMessageContent(item.content, conversationTitle, item.title)
     }
 
+    val isDark = isSystemInDarkTheme()
+    val annotatedContent = rememberLinkifiedText(text = displayContent, isDark = isDark)
     val msgCopiedText = stringResource(id = R.string.msg_copied)
 
     Column(
@@ -273,7 +371,7 @@ fun ChatBubbleItem(
                 ) {
                     if (displayContent.isNotBlank()) {
                         Text(
-                            text = displayContent,
+                            text = annotatedContent,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -343,18 +441,11 @@ private fun cleanMessageContent(
     var text = rawContent.trim()
 
     for (sender in senders) {
-        val prefixWithSpace = "$sender: "
-        val prefixWithoutSpace = "$sender:"
+        val multiAccountColon = Regex("^[^:\\n]{1,35}:\\s*${Regex.escape(sender)}\\s*[:\\n]\\s*", RegexOption.IGNORE_CASE)
+        val afterMulti = text.replaceFirst(multiAccountColon, "")
 
-        val cleaned = when {
-            text.startsWith(prefixWithSpace, ignoreCase = true) -> {
-                text.substring(prefixWithSpace.length).trim()
-            }
-            text.startsWith(prefixWithoutSpace, ignoreCase = true) -> {
-                text.substring(prefixWithoutSpace.length).trim()
-            }
-            else -> text
-        }
+        val directPrefix = Regex("^${Regex.escape(sender)}\\s*:\\s*", RegexOption.IGNORE_CASE)
+        val cleaned = afterMulti.replaceFirst(directPrefix, "").trim()
 
         if (cleaned.isNotBlank()) {
             text = cleaned

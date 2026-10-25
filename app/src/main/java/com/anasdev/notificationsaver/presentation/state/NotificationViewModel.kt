@@ -5,7 +5,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anasdev.notificationsaver.domain.model.AppNotificationGroup
-import com.anasdev.notificationsaver.domain.model.ConversationSummary
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.domain.usecase.NotificationUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,9 +36,6 @@ class NotificationViewModel @Inject constructor(
     private val _expandedApps = MutableStateFlow<Set<String>>(emptySet())
     val expandedApps: StateFlow<Set<String>> = _expandedApps.asStateFlow()
 
-    private val _selectedConversationKey = MutableStateFlow<String?>(null)
-    val selectedConversationKey: StateFlow<String?> = _selectedConversationKey.asStateFlow()
-
     val groupedUiState: StateFlow<GroupedUiState> = useCases.getGroupedNotifications()
         .map { GroupedUiState.Success(it) }
         .flowOn(Dispatchers.Default)
@@ -49,25 +45,10 @@ class NotificationViewModel @Inject constructor(
             initialValue = GroupedUiState.Loading,
         )
 
-    val recentConversations: StateFlow<List<ConversationSummary>> = useCases.getRecentConversations()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList(),
-        )
-
     fun toggleAppExpansion(packageName: String) {
         _expandedApps.update { current ->
             if (packageName in current) current - packageName else current + packageName
         }
-    }
-
-    fun openConversation(conversationKey: String) {
-        _selectedConversationKey.value = conversationKey
-    }
-
-    fun closeConversation() {
-        _selectedConversationKey.value = null
     }
 
     fun getConversationHistory(conversationKey: String): Flow<List<NotificationItem>> {
@@ -95,7 +76,6 @@ class NotificationViewModel @Inject constructor(
 
     fun clearAllNotifications() {
         _expandedApps.value = emptySet()
-        _selectedConversationKey.value = null
         viewModelScope.launch {
             useCases.clearAllNotifications()
         }

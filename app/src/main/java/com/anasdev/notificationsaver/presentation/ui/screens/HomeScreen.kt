@@ -90,8 +90,6 @@ fun HomeScreen(
     var pendingDeleteAppPackage by remember { mutableStateOf<String?>(null) }
     var pendingDeleteConversationKey by remember { mutableStateOf<String?>(null) }
 
-    val hasNotifications = (groupedUiState as? GroupedUiState.Success)?.groups?.isNotEmpty() == true
-
     if (showClearAllDialog) {
         AlertDialog(
             onDismissRequest = { showClearAllDialog = false },
@@ -190,15 +188,6 @@ fun HomeScreen(
                             contentDescription = stringResource(id = R.string.title_settings),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    }
-                    if (hasNotifications) {
-                        IconButton(onClick = { showClearAllDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Rounded.DeleteOutline,
-                                contentDescription = stringResource(id = R.string.dialog_clear_all_title),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

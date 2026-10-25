@@ -1,7 +1,7 @@
 # 🔔 Notification Saver
 
 [![Android CI](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-2.0.1-brightgreen.svg)
+![Version](https://img.shields.io/badge/Version-2.1.0-brightgreen.svg)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-blue.svg?logo=kotlin)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26%20(Android%208.0)-brightgreen.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-orange.svg)
@@ -18,6 +18,10 @@
 * **🗂️ Master-Detail Navigation & Chat Timeline**
     * **Home Screen:** 2-level expandable list (App Groups ➔ Conversations) with Material 3 spring physics.
     * **Detail Screen:** Chat bubble timeline with TopAppBar sender avatars, multiline formatting, and prefix cleaning.
+* **🚀 Open Source App Launcher Button**
+    * Launch the source application directly from `DetailScreen`'s TopAppBar with the **Open** (English) / **فتح** (Arabic) action button.
+* **🔗 Interactive Blue Underlined Web Links**
+    * Automatically detects embedded web URLs (`http://`, `https://`, `www.`), styles them in high-contrast blue with underlines, and opens them in the browser on click.
 * **🛡️ App Blacklist & Real-Time Filtering**
     * Exclude specific apps from notification capture using Jetpack DataStore.
     * Live search bar with Material 3 switches and blacklisted apps pinned to the top.
@@ -116,8 +120,8 @@
 * **Continuous Integration (`ci.yml`):** Runs `./gradlew assembleDebug` on every push and pull request to `main`/`master`.
 * **Continuous Deployment (`cd.yml`):** Automatically builds a signed release APK (`./gradlew assembleRelease`) and publishes a GitHub Release when a version tag (`v*`) is pushed:
   ```bash
-  git tag -a v2.0.1 -m "Release v2.0.1"
-  git push origin master --tags
+  git tag -a v2.1.0 -m "Release v2.1.0"
+  git push origin master v2.1.0
   ```
 
 ---
@@ -131,7 +135,7 @@ Copyright (c) 2026 Anas Muhammad
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
+in the Software without restriction rights, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:

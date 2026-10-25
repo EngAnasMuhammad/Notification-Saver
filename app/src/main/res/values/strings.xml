@@ -46,6 +46,8 @@
     <string name="btn_open_settings">Open System Settings</string>
     <string name="msg_copied">Copied to clipboard</string>
     <string name="placeholder_search_apps">Search apps…</string>
+    <string name="open_app">Open</string>
+    <string name="cannot_open_app">App cannot be opened</string>
 
     <!-- App Header Summary Plurals -->
     <string name="summary_conversations_one">%1$d conversation</string>

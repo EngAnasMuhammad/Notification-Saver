@@ -10,6 +10,8 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.text.Spanned
+import android.text.style.URLSpan
 import androidx.core.app.NotificationCompat
 import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.data.util.AvatarStorageManager
@@ -171,6 +173,39 @@ class NotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private fun extractTextWithUrls(charSequence: CharSequence?): String {
+        if (charSequence == null) return ""
+        val baseText = charSequence.toString()
+        if (charSequence is Spanned) {
+            val spans = charSequence.getSpans(0, charSequence.length, URLSpan::class.java)
+            if (spans.isNotEmpty()) {
+                val hiddenUrls = spans.mapNotNull { it.url }
+                    .filter { (it.startsWith("http://") || it.startsWith("https://")) && !baseText.contains(it) }
+                    .distinct()
+                if (hiddenUrls.isNotEmpty()) {
+                    return baseText + "\n" + hiddenUrls.joinToString("\n")
+                }
+            }
+        }
+        return baseText
+    }
+
+    private fun extractMessagingStyleText(notification: Notification): String? {
+        try {
+            val messagingStyle = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification)
+            if (messagingStyle != null) {
+                val lastMsg = messagingStyle.messages.lastOrNull()
+                if (lastMsg != null) {
+                    val charSequence = lastMsg.text
+                    if (!charSequence.isNullOrBlank()) {
+                        return extractTextWithUrls(charSequence)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+        return null
+    }
+
     private fun extractSenderName(
         packageName: String,
         notification: Notification,
@@ -292,27 +327,31 @@ class NotificationListenerService : NotificationListenerService() {
         }
 
         val rawTitle = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-        val rawText = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        val rawBigText = notification.extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
+        val rawText = extractTextWithUrls(notification.extras.getCharSequence(Notification.EXTRA_TEXT))
+        val rawBigText = extractTextWithUrls(notification.extras.getCharSequence(Notification.EXTRA_BIG_TEXT))
         val rawConversationTitle = notification.extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()?.trim()
+
+        val messagingStyleText = extractMessagingStyleText(notification)
 
         val senderName = extractSenderName(packageName, notification, rawTitle, rawText, rawBigText, rawConversationTitle)
         val conversationTitle = senderName.ifBlank { "General" }
         val title = senderName.ifBlank { rawTitle.trim().ifBlank { "General" } }
 
-        var content = if (rawBigText.isNotBlank()) rawBigText.trim() else rawText.trim()
+        val rawBody = messagingStyleText ?: if (rawBigText.isNotBlank()) rawBigText.trim() else rawText.trim()
+        var content = rawBody
 
         if (title.isBlank() && content.isBlank()) return
 
-        // Single-prefix cleanup at ingestion time
-        val prefixWithSpace = "$senderName: "
-        val prefixWithoutSpace = "$senderName:"
-        val cleanedContent = when {
-            content.startsWith(prefixWithSpace, ignoreCase = true) -> content.substring(prefixWithSpace.length).trim()
-            content.startsWith(prefixWithoutSpace, ignoreCase = true) -> content.substring(prefixWithoutSpace.length).trim()
-            else -> content
+        // Ingestion-time multi-account and single-prefix cleanup
+        if (senderName.isNotBlank() && senderName != "General") {
+            val multiAccountColon = Regex("^[^:\\n]{1,35}:\\s*${Regex.escape(senderName)}\\s*[:\\n]\\s*", RegexOption.IGNORE_CASE)
+            content = content.replaceFirst(multiAccountColon, "")
+
+            val directPrefix = Regex("^${Regex.escape(senderName)}\\s*:\\s*", RegexOption.IGNORE_CASE)
+            content = content.replaceFirst(directPrefix, "")
+
+            content = content.trim().ifBlank { rawBody }
         }
-        content = cleanedContent.ifBlank { content }
 
         val dedupKey = Objects.hash(packageName, title, content)
         val now = System.currentTimeMillis()
