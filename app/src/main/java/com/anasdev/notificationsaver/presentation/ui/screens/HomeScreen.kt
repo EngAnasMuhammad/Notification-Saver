@@ -65,13 +65,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.presentation.state.GroupedUiState
 import com.anasdev.notificationsaver.presentation.state.NotificationViewModel
+import com.anasdev.notificationsaver.presentation.state.SettingsViewModel
 import com.anasdev.notificationsaver.presentation.ui.components.AppHeaderItem
 import com.anasdev.notificationsaver.presentation.ui.components.AppIconCache
 import com.anasdev.notificationsaver.presentation.ui.components.ConversationRowItem
+import com.anasdev.notificationsaver.presentation.ui.components.PrivacyDisclaimerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,35 +84,20 @@ fun HomeScreen(
     isBatteryOptimized: Boolean,
     onConversationClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val groupedUiState by viewModel.groupedUiState.collectAsStateWithLifecycle()
     val expandedApps by viewModel.expandedApps.collectAsStateWithLifecycle()
-    var showClearAllDialog by remember { mutableStateOf(false) }
+    val hasSeenDisclaimer by settingsViewModel.hasSeenDisclaimer.collectAsStateWithLifecycle()
 
     var pendingDeleteAppPackage by remember { mutableStateOf<String?>(null) }
     var pendingDeleteConversationKey by remember { mutableStateOf<String?>(null) }
 
-    if (showClearAllDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearAllDialog = false },
-            title = { Text(stringResource(id = R.string.dialog_clear_all_title)) },
-            text = { Text(stringResource(id = R.string.dialog_clear_all_msg)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearAllNotifications()
-                        showClearAllDialog = false
-                    }
-                ) {
-                    Text(stringResource(id = R.string.btn_clear_all), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearAllDialog = false }) {
-                    Text(stringResource(id = R.string.btn_cancel))
-                }
-            }
+    if (!hasSeenDisclaimer) {
+        PrivacyDisclaimerDialog(
+            onConfirm = { settingsViewModel.markDisclaimerSeen() },
+            isDismissable = false
         )
     }
 

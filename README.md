@@ -1,7 +1,7 @@
 # 🔔 Notification Saver
 
 [![Android CI](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-2.1.0-brightgreen.svg)
+![Version](https://img.shields.io/badge/Version-2.2.0-brightgreen.svg)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-blue.svg?logo=kotlin)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26%20(Android%208.0)-brightgreen.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-orange.svg)
@@ -18,6 +18,10 @@
 * **🗂️ Master-Detail Navigation & Chat Timeline**
     * **Home Screen:** 2-level expandable list (App Groups ➔ Conversations) with Material 3 spring physics.
     * **Detail Screen:** Chat bubble timeline with TopAppBar sender avatars, multiline formatting, and prefix cleaning.
+* **⏰ Rolling-Window Auto-Delete Retention Policy**
+    * Configurable rolling expiration window (`Off`, `24 Hours`, `10 Days`, `30 Days`) deleting notifications older than the exact millisecond cutoff timestamp.
+* **🛡️ First-Launch Privacy & Responsibility Disclaimer**
+    * Localized first-launch dialog explaining 100% offline security (zero internet access), intended recovery purpose, and user data responsibility. Also accessible in Settings.
 * **🚀 Open Source App Launcher Button**
     * Launch the source application directly from `DetailScreen`'s TopAppBar with the **Open** (English) / **فتح** (Arabic) action button.
 * **🔗 Interactive Blue Underlined Web Links**
@@ -44,6 +48,7 @@
 
 | Challenge                                  | Engineering Solution                                                                                                                                                                                                          |
 |:-------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Rolling-Window Auto-Delete Pruning**     | Executed indexed Room DAO deletion queries (`timestamp < :cutoffTimestamp`) triggered synchronously on setting change, app launch, `ON_RESUME`, and throttled 15-minute background service checks.                           |
 | **Multi-Account Sender & Avatar Mismatch** | Built a package-aware extraction pipeline inspecting `MessagingStyle`, `LargeIcon`, and colon prefixes (`"Account: Sender"`), pairing the extracted sender name with a deduplicated `.webp` disk cache (`filesDir/avatars/`). |
 | **Burst & Ghost Notification Duplicates**  | Combined a bounded 5-second `ConcurrentHashMap` in-memory debouncer with an exact-match SQLite check anchored to the original message timestamp (`notification.when`).                                                        |
 | **120 FPS List Virtualization**            | Replaced nested lists with a single flattened `LazyColumn` using stable keys (`app_$packageName`, `conv_$conversationKey`), `contentType` definitions, and an in-memory `AppIconCache`.                                       |
@@ -120,8 +125,8 @@
 * **Continuous Integration (`ci.yml`):** Runs `./gradlew assembleDebug` on every push and pull request to `main`/`master`.
 * **Continuous Deployment (`cd.yml`):** Automatically builds a signed release APK (`./gradlew assembleRelease`) and publishes a GitHub Release when a version tag (`v*`) is pushed:
   ```bash
-  git tag -a v2.1.0 -m "Release v2.1.0"
-  git push origin master v2.1.0
+  git tag -a v2.2.0 -m "Release v2.2.0"
+  git push origin master v2.2.0
   ```
 
 ---

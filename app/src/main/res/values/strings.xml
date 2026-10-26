@@ -27,6 +27,17 @@
     <string name="setting_clear_all_subtitle">Permanently delete all saved messages</string>
     <string name="setting_licenses">Open Source Licenses</string>
 
+    <!-- Auto-Delete & Privacy Settings -->
+    <string name="auto_delete_title">Auto-Delete Old Notifications</string>
+    <string name="retention_off">Off (Keep Forever)</string>
+    <string name="retention_1_day">After 24 Hours (1 Day)</string>
+    <string name="retention_10_days">After 10 Days</string>
+    <string name="retention_30_days">After 30 Days</string>
+    <string name="privacy_disclaimer_title">Privacy &amp; Intended Use</string>
+    <string name="privacy_disclaimer_subtitle">100% offline notice &amp; user responsibility</string>
+    <string name="privacy_disclaimer_body">• 100% Offline &amp; Local: This application does not use or request internet access. All captured notifications remain strictly on your device.\n\n• Intended Purpose: Designed as a system utility to help you recover important notifications, reminders, and alerts dismissed by mistake.\n\n• User Responsibility: You have full control over which apps are logged via the App Filter and hold sole responsibility for the notifications you choose to save on your device.</string>
+    <string name="i_understand">I Understand</string>
+
     <!-- Dialogs & Buttons -->
     <string name="dialog_clear_all_title">Clear All Notifications</string>
     <string name="dialog_clear_all_msg">Are you sure you want to delete all saved notifications? \n\nThis action cannot be undone.</string>

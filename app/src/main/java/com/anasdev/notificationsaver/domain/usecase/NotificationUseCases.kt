@@ -10,4 +10,5 @@ data class NotificationUseCases @Inject constructor(
     val deleteConversation: DeleteConversationUseCase,
     val deleteAppGroup: DeleteAppGroupUseCase,
     val clearAllNotifications: ClearAllNotificationsUseCase,
+    val pruneOldNotifications: PruneOldNotificationsUseCase,
 )

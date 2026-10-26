@@ -37,7 +37,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.anasdev.notificationsaver.domain.model.ConversationGroup
 import java.io.File
-import java.util.Date
 
 @Composable
 fun ConversationRowItem(
@@ -54,7 +53,7 @@ fun ConversationRowItem(
     }
 
     val formattedTime = remember(conversation.latestTimestamp) {
-        timeFormatter.format(Date(conversation.latestTimestamp))
+        formatTimestamp(conversation.latestTimestamp)
     }
 
     val imageRequest = remember(conversation.senderIconPath) {

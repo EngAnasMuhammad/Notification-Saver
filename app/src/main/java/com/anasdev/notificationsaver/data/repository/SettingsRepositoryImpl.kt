@@ -3,11 +3,13 @@ package com.anasdev.notificationsaver.data.repository
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.anasdev.notificationsaver.domain.model.AppLanguage
 import com.anasdev.notificationsaver.domain.model.AppTheme
+import com.anasdev.notificationsaver.domain.model.RetentionPeriod
 import com.anasdev.notificationsaver.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,8 @@ class SettingsRepositoryImpl @Inject constructor(
         val BLACKLISTED_APPS_KEY = stringSetPreferencesKey("blacklisted_apps")
         val THEME_KEY = stringPreferencesKey("app_theme")
         val LANGUAGE_KEY = stringPreferencesKey("app_language")
+        val RETENTION_PERIOD_KEY = stringPreferencesKey("retention_period")
+        val DISCLAIMER_SEEN_KEY = booleanPreferencesKey("disclaimer_seen")
         const val RAW_PREFS = "settings_raw"
     }
 
@@ -54,6 +58,15 @@ class SettingsRepositoryImpl @Inject constructor(
         lang
     }
 
+    override val retentionPeriod: Flow<RetentionPeriod> = dataStore.data.map { preferences ->
+        val name = preferences[RETENTION_PERIOD_KEY] ?: RetentionPeriod.OFF.name
+        runCatching { RetentionPeriod.valueOf(name) }.getOrDefault(RetentionPeriod.OFF)
+    }
+
+    override val hasSeenDisclaimer: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[DISCLAIMER_SEEN_KEY] ?: false
+    }
+
     override suspend fun toggleAppBlacklist(packageName: String, isBlacklisted: Boolean) {
         dataStore.edit { preferences ->
             val current = preferences[BLACKLISTED_APPS_KEY] ?: emptySet()
@@ -77,6 +90,18 @@ class SettingsRepositoryImpl @Inject constructor(
         rawPrefs.edit().putString("app_language", language.name).apply()
         dataStore.edit { preferences ->
             preferences[LANGUAGE_KEY] = language.name
+        }
+    }
+
+    override suspend fun setRetentionPeriod(period: RetentionPeriod) {
+        dataStore.edit { preferences ->
+            preferences[RETENTION_PERIOD_KEY] = period.name
+        }
+    }
+
+    override suspend fun setDisclaimerSeen() {
+        dataStore.edit { preferences ->
+            preferences[DISCLAIMER_SEEN_KEY] = true
         }
     }
 }

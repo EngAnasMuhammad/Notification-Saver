@@ -6,17 +6,24 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Icon
 import android.os.Build
+import androidx.core.graphics.createBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.graphics.createBitmap
 
+/**
+ * Manages thread-safe extraction and compression of sender avatar icons onto local disk storage (`filesDir/avatars_v2`).
+ */
 @Singleton
 class AvatarStorageManager @Inject constructor() {
 
+    /**
+     * Converts a notification [Icon] into a compressed WebP file saved to local internal storage.
+     * Returns the absolute file path on success, or null on failure.
+     */
     suspend fun saveAvatarToDisk(
         context: Context,
         packageName: String,

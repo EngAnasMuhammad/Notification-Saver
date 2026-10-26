@@ -5,12 +5,26 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
-// Shared DateFormat instance to avoid allocating SimpleDateFormat on every list item recomposition
-val timeFormatter by lazy {
-    SimpleDateFormat("hh:mm a", Locale.getDefault())
+/** Formats timestamps into localized time strings (using ص/م for Arabic and AM/PM for English). */
+fun formatTimestamp(timestamp: Long): String {
+    val date = Date(timestamp)
+    val locale = Locale.getDefault()
+    val isArabic = locale.language.equals("ar", ignoreCase = true)
+
+    return if (isArabic) {
+        val formatter = SimpleDateFormat("hh:mm a", Locale.forLanguageTag("ar"))
+        val dfs = formatter.dateFormatSymbols
+        dfs.amPmStrings = arrayOf("ص", "م")
+        formatter.dateFormatSymbols = dfs
+        formatter.format(date)
+    } else {
+        val formatter = SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+        formatter.format(date)
+    }
 }
 
 /**

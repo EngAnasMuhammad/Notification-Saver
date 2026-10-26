@@ -73,9 +73,8 @@ import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.presentation.state.NotificationViewModel
 import com.anasdev.notificationsaver.presentation.ui.components.AppIconCache
-import com.anasdev.notificationsaver.presentation.ui.components.timeFormatter
+import com.anasdev.notificationsaver.presentation.ui.components.formatTimestamp
 import java.io.File
-import java.util.Date
 
 private val STRICT_WEB_LINK_REGEX = Regex(
     "(?i)\\b(?:https?://|ftps?://|www\\.)[a-zA-Z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
@@ -336,7 +335,7 @@ fun ChatBubbleItem(
     var showMenu by remember { mutableStateOf(false) }
 
     val formattedTime = remember(item.timestamp) {
-        timeFormatter.format(Date(item.timestamp))
+        formatTimestamp(item.timestamp)
     }
 
     val displayContent = remember(item.content, conversationTitle, item.title) {

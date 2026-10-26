@@ -28,6 +28,17 @@
     <string name="setting_clear_all_subtitle">حذف جميع الرسائل المحفوظة نهائيًا</string>
     <string name="setting_licenses">تراخيص المصادر المفتوحة</string>
 
+    <!-- Auto-Delete & Privacy Settings -->
+    <string name="auto_delete_title">الحذف التلقائي للإشعارات القديمة</string>
+    <string name="retention_off">إيقاف (حفظ دائماً)</string>
+    <string name="retention_1_day">بعد 24 ساعة (يوم واحد)</string>
+    <string name="retention_10_days">بعد 10 أيام</string>
+    <string name="retention_30_days">بعد 30 يوماً</string>
+    <string name="privacy_disclaimer_title">الخصوصية وإخلاء المسؤولية</string>
+    <string name="privacy_disclaimer_subtitle">يعمل محلياً 100% بدون إنترنت ومسؤولية الاستخدام</string>
+    <string name="privacy_disclaimer_body">• محلي 100% وبدون إنترنت: هذا التطبيق لا يستخدم ولا يطلب صلاحية الوصول للإنترنت نهائياً. جميع الإشعارات تُحفظ داخل جهازك فقط.\n\n• الغرض من الاستخدام: صُمم التطبيق كأداة مساعدة لاسترجاع الإشعارات والتنبيهات المهمة التي قد يتم مسحها عن طريق الخطأ.\n\n• مسؤولية المستخدم: يمكنك استثناء أي تطبيق عبر فلتر التطبيقات، وتقع على عاتق المستخدم وحده المسؤولية الكاملة عما يختار حفظه في جهازه.</string>
+    <string name="i_understand">أفهم وأوافق</string>
+
     <!-- Dialogs & Buttons -->
     <string name="dialog_clear_all_title">مسح جميع الإشعارات</string>
     <string name="dialog_clear_all_msg">هل أنت تأكد من أنك تريد حذف جميع الإشعارات المحفوظة؟\n\n لا يمكن التراجع عن هذا الإجراء.</string>

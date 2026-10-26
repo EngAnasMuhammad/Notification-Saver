@@ -34,7 +34,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.domain.model.AppNotificationGroup
-import java.util.Date
 
 @Composable
 fun AppHeaderItem(
@@ -49,7 +48,7 @@ fun AppHeaderItem(
     }
 
     val formattedTime = remember(appGroup.latestTimestamp) {
-        timeFormatter.format(Date(appGroup.latestTimestamp))
+        formatTimestamp(appGroup.latestTimestamp)
     }
 
     val rotateAngle by animateFloatAsState(

@@ -10,5 +10,6 @@ interface NotificationRepository {
     suspend fun deleteConversation(conversationKey: String)
     suspend fun deleteAppGroup(packageName: String)
     suspend fun clearAllNotifications()
+    suspend fun pruneOldNotifications(cutoffTimestamp: Long)
     suspend fun isDuplicate(packageName: String, title: String, content: String, timestamp: Long): Boolean
 }

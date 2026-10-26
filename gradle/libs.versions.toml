@@ -17,8 +17,8 @@ composeBom = "2026.09.00"
 navigationCompose = "2.10.2"
 roomRuntime = "2.8.5"
 leakcanary = "1.0.0"
-appVersionName = "2.1.0"
-appVersionCode = "4"
+appVersionName = "2.2.0"
+appVersionCode = "5"
 
 [libraries]
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }

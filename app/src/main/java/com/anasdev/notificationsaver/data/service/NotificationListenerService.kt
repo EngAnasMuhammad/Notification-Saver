@@ -17,6 +17,7 @@ import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.data.util.AvatarStorageManager
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.domain.usecase.GetBlacklistedAppsUseCase
+import com.anasdev.notificationsaver.domain.usecase.PruneOldNotificationsUseCase
 import com.anasdev.notificationsaver.domain.usecase.SaveNotificationUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,9 @@ class NotificationListenerService : NotificationListenerService() {
     @Inject
     lateinit var getBlacklistedAppsUseCase: GetBlacklistedAppsUseCase
 
+    @Inject
+    lateinit var pruneOldNotificationsUseCase: PruneOldNotificationsUseCase
+
     private var serviceJob = SupervisorJob()
     private var serviceScope = CoroutineScope(serviceJob + Dispatchers.IO)
 
@@ -47,6 +51,8 @@ class NotificationListenerService : NotificationListenerService() {
 
     // In-memory blacklist cache: set of package names toggled off by user
     private val blockedPackagesCache = ConcurrentHashMap.newKeySet<String>()
+
+    private var lastPruneTimeMs = 0L
 
     companion object {
         private const val NOTIFICATION_ID = 1001
@@ -100,6 +106,20 @@ class NotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private fun checkAndPruneOldNotifications() {
+        val now = System.currentTimeMillis()
+        if (now - lastPruneTimeMs > 15 * 60 * 1000L) {
+            lastPruneTimeMs = now
+            serviceScope.launch {
+                try {
+                    pruneOldNotificationsUseCase()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     private fun startForegroundService() {
         try {
             val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -127,6 +147,7 @@ class NotificationListenerService : NotificationListenerService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         ensureActiveScope()
+        checkAndPruneOldNotifications()
         return START_STICKY
     }
 
@@ -164,6 +185,7 @@ class NotificationListenerService : NotificationListenerService() {
      */
     private fun syncActiveNotifications() {
         try {
+            checkAndPruneOldNotifications()
             val activeNotifications = activeNotifications ?: return
             for (sbn in activeNotifications) {
                 processAndSaveNotification(sbn)
@@ -307,6 +329,8 @@ class NotificationListenerService : NotificationListenerService() {
     }
 
     private fun processAndSaveNotification(sbn: StatusBarNotification) {
+        checkAndPruneOldNotifications()
+
         val packageName = sbn.packageName
 
         // Stage 3 Check: Immediate Blacklist Gate

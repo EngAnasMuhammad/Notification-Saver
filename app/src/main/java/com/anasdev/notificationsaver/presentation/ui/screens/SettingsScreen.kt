@@ -12,11 +12,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AutoDelete
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -47,6 +49,8 @@ import com.anasdev.notificationsaver.BuildConfig
 import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.presentation.state.SettingsViewModel
 import com.anasdev.notificationsaver.presentation.ui.components.LanguageSelectionDialog
+import com.anasdev.notificationsaver.presentation.ui.components.PrivacyDisclaimerDialog
+import com.anasdev.notificationsaver.presentation.ui.components.RetentionSelectionDialog
 import com.anasdev.notificationsaver.presentation.ui.components.ThemeSelectionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,11 +62,14 @@ fun SettingsScreen(
 ) {
     val activeTheme by viewModel.activeTheme.collectAsStateWithLifecycle()
     val activeLanguage by viewModel.activeLanguage.collectAsStateWithLifecycle()
+    val retentionPeriod by viewModel.retentionPeriod.collectAsStateWithLifecycle()
 
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showRetentionDialog by remember { mutableStateOf(false) }
     var showClearConfirmDialog by remember { mutableStateOf(false) }
     var showLicensesDialog by remember { mutableStateOf(false) }
+    var showDisclaimerDialog by remember { mutableStateOf(false) }
 
     if (showThemeDialog) {
         ThemeSelectionDialog(
@@ -77,6 +84,21 @@ fun SettingsScreen(
             currentLanguage = activeLanguage,
             onLanguageSelected = { viewModel.setLanguage(it) },
             onDismissRequest = { showLanguageDialog = false }
+        )
+    }
+
+    if (showRetentionDialog) {
+        RetentionSelectionDialog(
+            currentPeriod = retentionPeriod,
+            onPeriodSelected = { viewModel.setRetentionPeriod(it) },
+            onDismissRequest = { showRetentionDialog = false }
+        )
+    }
+
+    if (showDisclaimerDialog) {
+        PrivacyDisclaimerDialog(
+            onConfirm = { showDisclaimerDialog = false },
+            isDismissable = true
         )
     }
 
@@ -201,6 +223,14 @@ fun SettingsScreen(
             }
             item {
                 SettingsListItem(
+                    title = stringResource(id = R.string.auto_delete_title),
+                    subtitle = stringResource(id = retentionPeriod.titleResId),
+                    icon = Icons.Rounded.AutoDelete,
+                    onClick = { showRetentionDialog = true }
+                )
+            }
+            item {
+                SettingsListItem(
                     title = stringResource(id = R.string.setting_clear_all),
                     subtitle = stringResource(id = R.string.setting_clear_all_subtitle),
                     icon = Icons.Rounded.DeleteOutline,
@@ -219,6 +249,14 @@ fun SettingsScreen(
             // Category 4: About
             item {
                 SettingsCategoryHeader(stringResource(id = R.string.category_about))
+            }
+            item {
+                SettingsListItem(
+                    title = stringResource(id = R.string.privacy_disclaimer_title),
+                    subtitle = stringResource(id = R.string.privacy_disclaimer_subtitle),
+                    icon = Icons.Rounded.Security,
+                    onClick = { showDisclaimerDialog = true }
+                )
             }
             item {
                 SettingsListItem(

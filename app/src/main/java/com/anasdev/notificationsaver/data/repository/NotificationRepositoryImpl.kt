@@ -41,6 +41,10 @@ class NotificationRepositoryImpl @Inject constructor(
         dao.deleteAllNotifications()
     }
 
+    override suspend fun pruneOldNotifications(cutoffTimestamp: Long) {
+        dao.deleteNotificationsOlderThan(cutoffTimestamp)
+    }
+
     override suspend fun isDuplicate(
         packageName: String,
         title: String,
