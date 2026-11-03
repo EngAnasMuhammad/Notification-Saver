@@ -1,5 +1,7 @@
 package com.anasdev.notificationsaver.presentation.ui.screens
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -187,6 +190,31 @@ fun SettingsScreen(
                     subtitle = stringResource(id = activeLanguage.titleResId),
                     icon = Icons.Rounded.Language,
                     onClick = { showLanguageDialog = true }
+                )
+            }
+            item {
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+            }
+
+            // Category: Service
+            item {
+                SettingsCategoryHeader(stringResource(id = R.string.category_service))
+            }
+            item {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                SettingsListItem(
+                    title = stringResource(id = R.string.setting_notification_access),
+                    subtitle = stringResource(id = R.string.setting_notification_access_subtitle),
+                    icon = Icons.Rounded.NotificationsActive,
+                    onClick = {
+                        context.startActivity(
+                            Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        )
+                    }
                 )
             }
             item {

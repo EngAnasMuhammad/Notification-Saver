@@ -61,11 +61,19 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
+      - name: Rename Release APK
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          cd app/build/outputs/apk/release
+          if [ -f "app-release.apk" ]; then
+            mv app-release.apk "Notification_Saver_${VERSION}.apk"
+          fi
+
       - name: Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/release/*.apk
-          name: Release ${{ github.ref_name }}
+          name: Notification Saver ${{ github.ref_name }}
           body: "Official Release of Notification Saver ${{ github.ref_name }}"
           draft: false
           prerelease: false

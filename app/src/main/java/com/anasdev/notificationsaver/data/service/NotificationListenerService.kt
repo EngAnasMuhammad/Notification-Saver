@@ -1,15 +1,21 @@
+@file:Suppress("ForegroundServicePermission", "NewApi")
+
 package com.anasdev.notificationsaver.data.service
 
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.text.Spanned
 import android.text.style.URLSpan
 import androidx.core.app.NotificationCompat
+import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.data.util.AvatarStorageManager
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.domain.usecase.GetBlacklistedAppsUseCase
@@ -52,31 +58,52 @@ class NotificationListenerService : NotificationListenerService() {
     private var lastPruneTimeMs = 0L
 
     companion object {
+        private const val NOTIFICATION_ID = 1001
+        private const val CHANNEL_ID = "notification_saver_background"
+
         /** Tracks real-time active IPC binding state between Android OS and this listener. */
         @Volatile
         var isConnected: Boolean = false
             private set
 
         /**
+         * Component Toggle Trick: Force-restarts the Android system NotificationManagerService
+         * binding by toggling the service component state in PackageManager.
+         */
+        fun forceRebind(context: Context) {
+            try {
+                val component = ComponentName(context, NotificationListenerService::class.java)
+                val pm = context.packageManager
+                pm.setComponentEnabledSetting(
+                    component,
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP,
+                )
+                pm.setComponentEnabledSetting(
+                    component,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP,
+                )
+            } catch (_: Exception) {}
+        }
+
+        /**
          * Safely requests system rebind using official NotificationListenerService API.
-         * Never mutates PackageManager component state to avoid dropping Android listener grants.
          */
         fun rebindService(context: Context) {
             try {
                 val component = ComponentName(context, NotificationListenerService::class.java)
                 requestRebind(component)
-            } catch (_: Exception) {}
-        }
-
-        /** Backward compatible alias for UI triggers */
-        fun forceRebind(context: Context) {
-            rebindService(context)
+            } catch (_: Exception) {
+                forceRebind(context)
+            }
         }
     }
 
     override fun onCreate() {
         super.onCreate()
         ensureActiveScope()
+        startForegroundService()
         observeBlacklist()
     }
 
@@ -95,6 +122,39 @@ class NotificationListenerService : NotificationListenerService() {
                 blockedPackagesCache.clear()
                 blockedPackagesCache.addAll(blockedSet)
             }
+        }
+    }
+
+    @Suppress("ForegroundServicePermission", "NewApi")
+    private fun startForegroundService() {
+        try {
+            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Background Notification Listener",
+                NotificationManager.IMPORTANCE_MIN,
+            )
+            manager.createNotificationChannel(channel)
+
+            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(getString(R.string.service_notification_title))
+                .setContentText(getString(R.string.service_notification_sub))
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setOngoing(true)
+                .build()
+
+            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -129,14 +189,17 @@ class NotificationListenerService : NotificationListenerService() {
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         isConnected = false
-        // Graceful non-destructive system rebind request
+        // Immediate system rebind request
         try {
             requestRebind(ComponentName(this, NotificationListenerService::class.java))
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+            forceRebind(this)
+        }
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+        forceRebind(this)
     }
 
     override fun onDestroy() {

@@ -16,9 +16,13 @@
 
     <!-- Settings Categories & Items -->
     <string name="category_preferences">التفضيلات</string>
+    <string name="category_service">الخدمة</string>
     <string name="category_filtering">التصفية والفلترة</string>
     <string name="category_privacy">الخصوصية</string>
     <string name="category_about">حول التطبيق</string>
+
+    <string name="setting_notification_access">الوصول إلى الإشعارات</string>
+    <string name="setting_notification_access_subtitle">إذا توقف التطبيق عن تلقي الإشعارات بعد إجراء تحديث، فأعد تشغيل هذه الخدمة.</string>
 
     <string name="setting_app_theme">مظهر التطبيق</string>
     <string name="setting_language">اللغة</string>
