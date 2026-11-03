@@ -33,10 +33,22 @@ android {
                     properties.load(stream)
                 }
                 val storeFilePath = properties.getProperty("storeFile", "release-keystore.jks")
+                val storePass = properties.getProperty("storePassword", "")
+                val alias = properties.getProperty("keyAlias", "")
+                val keyPass = properties.getProperty("keyPassword", "")
+
+                if (storePass.isBlank() || alias.isBlank()) {
+                    throw GradleException(
+                        "keystore.properties exists but is missing required signing credentials! " +
+                        "storePassword='${if (storePass.isBlank()) "MISSING" else "***"}', " +
+                        "keyAlias='${alias.ifBlank { "MISSING" }}'."
+                    )
+                }
+
                 storeFile = rootProject.file(storeFilePath)
-                storePassword = properties.getProperty("storePassword", "")
-                keyAlias = properties.getProperty("keyAlias", "")
-                keyPassword = properties.getProperty("keyPassword", "")
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass.ifBlank { storePass }
             } else {
                 // Sane fallback to debug keystore for development & CI runs without keystore.properties
                 initWith(signingConfigs.getByName("debug"))

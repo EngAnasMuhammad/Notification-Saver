@@ -28,7 +28,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Set up Release Keystore
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -36,10 +36,16 @@ jobs:
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > release-keystore.jks
-          echo "storeFile=release-keystore.jks" > keystore.properties
-          echo "storePassword=$KEYSTORE_PASSWORD" >> keystore.properties
-          echo "keyAlias=$KEY_ALIAS" >> keystore.properties
-          echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
+          if [ ! -s release-keystore.jks ]; then
+            echo "Error: release-keystore.jks is empty after base64 decoding! Check RELEASE_KEYSTORE_BASE64 secret."
+            exit 1
+          fi
+          cat <<EOF > keystore.properties
+          storeFile=release-keystore.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}
+          EOF
 
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
