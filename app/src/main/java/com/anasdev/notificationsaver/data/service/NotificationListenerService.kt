@@ -59,20 +59,25 @@ class NotificationListenerService : NotificationListenerService() {
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "notification_saver_background"
 
+        /** Tracks real-time active IPC binding state between Android OS and this listener. */
+        @Volatile
+        var isConnected: Boolean = false
+            private set
+
         /**
          * Safely requests system rebind using official NotificationListenerService API.
-         * Falls back to component toggling only if explicit recovery is requested.
+         * If not currently connected, bounces the component enabled state to force
+         * system_server's NotificationManagerService to immediately establish a fresh IPC binder.
          */
         fun rebindService(context: Context, useComponentFallback: Boolean = false) {
             val component = ComponentName(context, NotificationListenerService::class.java)
+            if (!isConnected || useComponentFallback) {
+                forceComponentToggle(context, component)
+            }
             try {
                 // Official framework rebind API (API 24+)
                 requestRebind(component)
-            } catch (_: Exception) {
-                if (useComponentFallback) {
-                    forceComponentToggle(context, component)
-                }
-            }
+            } catch (_: Exception) {}
         }
 
         /**
@@ -175,12 +180,14 @@ class NotificationListenerService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        isConnected = true
         ensureActiveScope()
         syncActiveNotifications()
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        isConnected = false
         // Graceful non-destructive system rebind request
         try {
             requestRebind(ComponentName(this, NotificationListenerService::class.java))
@@ -196,6 +203,7 @@ class NotificationListenerService : NotificationListenerService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        isConnected = false
         serviceJob.cancel()
     }
 

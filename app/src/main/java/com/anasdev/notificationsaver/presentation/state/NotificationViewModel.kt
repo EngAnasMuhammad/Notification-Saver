@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anasdev.notificationsaver.data.service.NotificationListenerService
 import com.anasdev.notificationsaver.domain.model.AppNotificationGroup
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.domain.usecase.NotificationUseCases
@@ -122,7 +123,11 @@ class NotificationViewModel @Inject constructor(
     fun rebindListenerService() {
         pruneOldNotifications()
         if (checkNotificationPermission()) {
-            com.anasdev.notificationsaver.data.service.NotificationListenerService.forceRebind(context)
+            val isBound = NotificationListenerService.isConnected
+            NotificationListenerService.rebindService(
+                context,
+                useComponentFallback = !isBound
+            )
         }
     }
 }
