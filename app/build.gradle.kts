@@ -1,9 +1,11 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
-
 }
 
 android {
@@ -22,12 +24,32 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val properties = Properties()
+                FileInputStream(keystorePropertiesFile).use { stream ->
+                    properties.load(stream)
+                }
+                val storeFilePath = properties.getProperty("storeFile", "release-keystore.jks")
+                storeFile = rootProject.file(storeFilePath)
+                storePassword = properties.getProperty("storePassword", "")
+                keyAlias = properties.getProperty("keyAlias", "")
+                keyPassword = properties.getProperty("keyPassword", "")
+            } else {
+                // Sane fallback to debug keystore for development & CI runs without keystore.properties
+                initWith(signingConfigs.getByName("debug"))
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

@@ -1,6 +1,5 @@
 package com.anasdev.notificationsaver.presentation.ui.components
 
-import android.content.pm.PackageManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,18 +41,17 @@ import java.io.File
 fun ConversationRowItem(
     conversation: ConversationGroup,
     packageName: String,
-    pm: PackageManager,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var lastClickTime by remember { mutableLongStateOf(0L) }
     val (appIcon, appLabel) = remember(packageName) {
-        AppIconCache.getAppInfo(packageName, pm)
+        AppIconCache.getAppInfo(packageName, context)
     }
 
-    val formattedTime = remember(conversation.latestTimestamp) {
-        formatTimestamp(conversation.latestTimestamp)
+    val formattedTime = remember(conversation.latestTimestamp, context) {
+        formatRelativeDateTime(conversation.latestTimestamp, context)
     }
 
     val imageRequest = remember(conversation.senderIconPath) {

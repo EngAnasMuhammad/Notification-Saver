@@ -1,7 +1,7 @@
 package com.anasdev.notificationsaver.presentation.ui.components
 
-import android.content.pm.PackageManager
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,16 +39,16 @@ import com.anasdev.notificationsaver.domain.model.AppNotificationGroup
 fun AppHeaderItem(
     appGroup: AppNotificationGroup,
     isExpanded: Boolean,
-    pm: PackageManager,
     onToggleExpand: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val (appIcon, appLabel) = remember(appGroup.packageName) {
-        AppIconCache.getAppInfo(appGroup.packageName, pm)
+        AppIconCache.getAppInfo(appGroup.packageName, context)
     }
 
-    val formattedTime = remember(appGroup.latestTimestamp) {
-        formatTimestamp(appGroup.latestTimestamp)
+    val formattedTime = remember(appGroup.latestTimestamp, context) {
+        formatRelativeDateTime(appGroup.latestTimestamp, context)
     }
 
     val rotateAngle by animateFloatAsState(

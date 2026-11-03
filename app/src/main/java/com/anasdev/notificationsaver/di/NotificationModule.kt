@@ -29,6 +29,13 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_notifications_packageName_conversationTitle_timestamp ON notifications(packageName, conversationTitle, timestamp)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_notifications_packageName_title_timestamp ON notifications(packageName, title, timestamp)")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
@@ -58,7 +65,7 @@ object NotificationModule {
             NotificationDatabase::class.java,
             "notification_db"
         )
-        .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+        .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
         .fallbackToDestructiveMigration(dropAllTables = true)
         .build()
     }

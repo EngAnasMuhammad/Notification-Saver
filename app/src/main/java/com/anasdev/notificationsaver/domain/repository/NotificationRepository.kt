@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface NotificationRepository {
     fun getAllNotifications(): Flow<List<NotificationItem>>
+    fun getConversationHistory(packageName: String, title: String): Flow<List<NotificationItem>>
     suspend fun saveNotification(notification: NotificationItem)
     suspend fun deleteNotification(notification: NotificationItem)
     suspend fun deleteConversation(conversationKey: String)

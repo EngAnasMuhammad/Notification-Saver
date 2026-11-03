@@ -8,7 +8,9 @@ import androidx.room.PrimaryKey
     tableName = "notifications",
     indices = [
         Index(value = ["timestamp"]),
-        Index(value = ["packageName", "timestamp"])
+        Index(value = ["packageName", "timestamp"]),
+        Index(value = ["packageName", "conversationTitle", "timestamp"]),
+        Index(value = ["packageName", "title", "timestamp"]),
     ]
 )
 data class NotificationData(

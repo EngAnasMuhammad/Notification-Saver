@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -73,7 +72,8 @@ import com.anasdev.notificationsaver.R
 import com.anasdev.notificationsaver.domain.model.NotificationItem
 import com.anasdev.notificationsaver.presentation.state.NotificationViewModel
 import com.anasdev.notificationsaver.presentation.ui.components.AppIconCache
-import com.anasdev.notificationsaver.presentation.ui.components.formatTimestamp
+import com.anasdev.notificationsaver.presentation.ui.components.formatDateHeader
+import com.anasdev.notificationsaver.presentation.ui.components.formatTimeOnly
 import java.io.File
 
 private val STRICT_WEB_LINK_REGEX = Regex(
@@ -84,7 +84,6 @@ private val STRICT_WEB_LINK_REGEX = Regex(
 @Composable
 fun DetailScreen(
     conversationKey: String,
-    pm: PackageManager,
     viewModel: NotificationViewModel,
     onBackClick: () -> Unit,
 ) {
@@ -103,7 +102,7 @@ fun DetailScreen(
     }
 
     val (appIcon, appLabel) = remember(packageName) {
-        AppIconCache.getAppInfo(packageName, pm)
+        AppIconCache.getAppInfo(packageName, context)
     }
 
     val isAppLaunchable = remember(packageName) {
@@ -230,6 +229,14 @@ fun DetailScreen(
         }
     ) { paddingValues ->
         if (notifications.isNotEmpty()) {
+            val groupedByDay = remember(notifications, context) {
+                val calendar = java.util.Calendar.getInstance()
+                notifications.groupBy { item ->
+                    calendar.timeInMillis = item.timestamp
+                    calendar.get(java.util.Calendar.YEAR) to calendar.get(java.util.Calendar.DAY_OF_YEAR)
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -237,15 +244,47 @@ fun DetailScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(
-                    items = notifications,
-                    key = { it.id }
-                ) { item ->
-                    ChatBubbleItem(
-                        item = item,
-                        conversationTitle = displayTitle,
-                        onDelete = { viewModel.deleteNotification(item) }
-                    )
+                groupedByDay.forEach { (_, dayNotifications) ->
+                    val firstTimestamp = dayNotifications.first().timestamp
+                    val dayHeaderTitle = formatDateHeader(firstTimestamp, context)
+
+                    item(
+                        key = "header_${dayNotifications.first().id}_$firstTimestamp",
+                        contentType = "date_header"
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                tonalElevation = 1.dp
+                            ) {
+                                Text(
+                                    text = dayHeaderTitle,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    items(
+                        items = dayNotifications,
+                        key = { it.id },
+                        contentType = { "chat_bubble" }
+                    ) { item ->
+                        ChatBubbleItem(
+                            item = item,
+                            conversationTitle = displayTitle,
+                            onDelete = { viewModel.deleteNotification(item) }
+                        )
+                    }
                 }
             }
         } else {
@@ -335,7 +374,7 @@ fun ChatBubbleItem(
     var showMenu by remember { mutableStateOf(false) }
 
     val formattedTime = remember(item.timestamp) {
-        formatTimestamp(item.timestamp)
+        formatTimeOnly(item.timestamp)
     }
 
     val displayContent = remember(item.content, conversationTitle, item.title) {

@@ -45,6 +45,7 @@ class NotificationListenerService : NotificationListenerService() {
 
     private var serviceJob = SupervisorJob()
     private var serviceScope = CoroutineScope(serviceJob + Dispatchers.IO)
+    private var blacklistJob: kotlinx.coroutines.Job? = null
 
     // In-memory debouncer cache: maps Objects.hash(packageName, title, content) -> timestamp
     private val recentNotificationsCache = ConcurrentHashMap<Int, Long>()
@@ -59,12 +60,27 @@ class NotificationListenerService : NotificationListenerService() {
         private const val CHANNEL_ID = "notification_saver_background"
 
         /**
-         * Component Toggle Trick: Force-restarts the Android system NotificationManagerService
-         * binding by toggling the service component state in PackageManager.
+         * Safely requests system rebind using official NotificationListenerService API.
+         * Falls back to component toggling only if explicit recovery is requested.
          */
-        fun forceRebind(context: Context) {
+        fun rebindService(context: Context, useComponentFallback: Boolean = false) {
+            val component = ComponentName(context, NotificationListenerService::class.java)
             try {
-                val component = ComponentName(context, NotificationListenerService::class.java)
+                // Official framework rebind API (API 24+)
+                requestRebind(component)
+            } catch (_: Exception) {
+                if (useComponentFallback) {
+                    forceComponentToggle(context, component)
+                }
+            }
+        }
+
+        /**
+         * Emergency component toggle fallback for manual UI user rebind triggers.
+         * Avoid running this automatically inside listener lifecycle callbacks to prevent restart loops.
+         */
+        fun forceComponentToggle(context: Context, component: ComponentName = ComponentName(context, NotificationListenerService::class.java)) {
+            try {
                 val pm = context.packageManager
                 pm.setComponentEnabledSetting(
                     component,
@@ -79,6 +95,11 @@ class NotificationListenerService : NotificationListenerService() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+
+        /** Backward compatible alias for UI triggers */
+        fun forceRebind(context: Context) {
+            rebindService(context, useComponentFallback = true)
         }
     }
 
@@ -98,7 +119,8 @@ class NotificationListenerService : NotificationListenerService() {
     }
 
     private fun observeBlacklist() {
-        serviceScope.launch {
+        blacklistJob?.cancel()
+        blacklistJob = serviceScope.launch {
             getBlacklistedAppsUseCase().collect { blockedSet ->
                 blockedPackagesCache.clear()
                 blockedPackagesCache.addAll(blockedSet)
@@ -159,12 +181,17 @@ class NotificationListenerService : NotificationListenerService() {
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
-        forceRebind(this)
+        // Graceful non-destructive system rebind request
+        try {
+            requestRebind(ComponentName(this, NotificationListenerService::class.java))
+        } catch (_: Exception) {}
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        forceRebind(this)
+        try {
+            requestRebind(ComponentName(this, NotificationListenerService::class.java))
+        } catch (_: Exception) {}
     }
 
     override fun onDestroy() {

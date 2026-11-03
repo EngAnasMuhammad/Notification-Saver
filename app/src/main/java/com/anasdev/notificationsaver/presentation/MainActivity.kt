@@ -93,7 +93,6 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     if (notificationEnabled) {
                         AppNavigation(
-                            pm = packageManager,
                             viewModel = viewModel,
                             isBatteryOptimized = batteryOptimized,
                         )

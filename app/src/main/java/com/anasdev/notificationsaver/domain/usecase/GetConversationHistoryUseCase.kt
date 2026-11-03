@@ -5,39 +5,15 @@ import com.anasdev.notificationsaver.domain.repository.NotificationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class GetConversationHistoryUseCase @Inject constructor(
-    private val repository: NotificationRepository
+    private val repository: NotificationRepository,
 ) {
     operator fun invoke(conversationKey: String): Flow<List<NotificationItem>> {
-        return repository.getAllNotifications()
-            .map { items ->
-                items.filter { item ->
-                    val resolvedName = resolveSenderName(item)
-                    val rawDisplay = item.conversationTitle?.takeIf { it.isNotBlank() }
-                        ?: item.title.ifBlank { "General" }
-                    val itemKeyResolved = "${item.packageName}:$resolvedName"
-                    val itemKeyRaw = "${item.packageName}:$rawDisplay"
-
-                    itemKeyResolved == conversationKey || itemKeyRaw == conversationKey
-                }.sortedByDescending { it.timestamp }
-            }
+        val packageName = conversationKey.substringBefore(':')
+        val title = conversationKey.substringAfter(':')
+        return repository.getConversationHistory(packageName, title)
             .flowOn(Dispatchers.Default)
-    }
-
-    private fun resolveSenderName(item: NotificationItem): String {
-        val rawTitle = item.conversationTitle?.takeIf { it.isNotBlank() }
-            ?: item.title.takeIf { it.isNotBlank() }
-            ?: "General"
-
-        val cleanTitle = if (item.packageName == "com.instagram.android" && rawTitle.contains(":")) {
-            rawTitle.substringAfterLast(":").trim()
-        } else {
-            rawTitle.trim()
-        }
-
-        return cleanTitle.ifBlank { "General" }
     }
 }

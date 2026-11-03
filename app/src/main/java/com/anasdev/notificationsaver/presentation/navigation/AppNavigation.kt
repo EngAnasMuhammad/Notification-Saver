@@ -1,6 +1,5 @@
 package com.anasdev.notificationsaver.presentation.navigation
 
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -37,7 +36,6 @@ object NavRoutes {
 
 @Composable
 fun AppNavigation(
-    pm: PackageManager,
     viewModel: NotificationViewModel,
     isBatteryOptimized: Boolean,
 ) {
@@ -77,7 +75,6 @@ fun AppNavigation(
     ) {
         composable(NavRoutes.HOME) {
             HomeScreen(
-                pm = pm,
                 viewModel = viewModel,
                 isBatteryOptimized = isBatteryOptimized,
                 onConversationClick = { conversationKey ->
@@ -104,7 +101,6 @@ fun AppNavigation(
 
             DetailScreen(
                 conversationKey = conversationKey,
-                pm = pm,
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() }
             )
@@ -119,7 +115,6 @@ fun AppNavigation(
 
         composable(NavRoutes.APP_FILTER) {
             AppFilterScreen(
-                pm = pm,
                 onBackClick = { navController.popBackStack() }
             )
         }

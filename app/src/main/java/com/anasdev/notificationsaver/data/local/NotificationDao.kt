@@ -31,9 +31,17 @@ interface NotificationDao {
     @Query("DELETE FROM notifications WHERE packageName = :packageName AND (conversationTitle = :title OR (:title = 'General' AND (conversationTitle IS NULL OR conversationTitle = '')) OR title = :title)")
     suspend fun deleteConversationByPackageAndTitle(packageName: String, title: String)
 
+    /** Retrieves distinct avatar file paths for a conversation before deletion. */
+    @Query("SELECT DISTINCT senderIconPath FROM notifications WHERE packageName = :packageName AND (conversationTitle = :title OR (:title = 'General' AND (conversationTitle IS NULL OR conversationTitle = '')) OR title = :title) AND senderIconPath IS NOT NULL")
+    suspend fun getAvatarPathsForConversation(packageName: String, title: String): List<String>
+
     /** Deletes all notifications associated with an application package. */
     @Query("DELETE FROM notifications WHERE packageName = :packageName")
     suspend fun deleteAppNotifications(packageName: String)
+
+    /** Retrieves distinct avatar file paths for an application package before deletion. */
+    @Query("SELECT DISTINCT senderIconPath FROM notifications WHERE packageName = :packageName AND senderIconPath IS NOT NULL")
+    suspend fun getAvatarPathsForApp(packageName: String): List<String>
 
     /** Purges all notification records from the local database. */
     @Query("DELETE FROM notifications")
@@ -42,6 +50,10 @@ interface NotificationDao {
     /** Deletes all notifications older than the specified rolling millisecond cutoff timestamp. */
     @Query("DELETE FROM notifications WHERE timestamp < :cutoffTimestamp")
     suspend fun deleteNotificationsOlderThan(cutoffTimestamp: Long)
+
+    /** Retrieves avatar file paths for notifications older than the cutoff. */
+    @Query("SELECT DISTINCT senderIconPath FROM notifications WHERE timestamp < :cutoffTimestamp AND senderIconPath IS NOT NULL")
+    suspend fun getAvatarPathsOlderThan(cutoffTimestamp: Long): List<String>
 
     /** Retrieves distinct application package names stored in the database. */
     @Query("SELECT DISTINCT packageName FROM notifications")
@@ -54,6 +66,13 @@ interface NotificationDao {
     /** Emits all notification records ordered by creation timestamp descending. */
     @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
     fun getAllNotificationsByDate(): Flow<List<NotificationData>>
+
+    /**
+     * Emits notification records for a specific conversation, indexed and ordered by timestamp descending.
+     * Prevents loading the entire database into memory when viewing a single conversation history.
+     */
+    @Query("SELECT * FROM notifications WHERE packageName = :packageName AND (conversationTitle = :title OR (:title = 'General' AND (conversationTitle IS NULL OR conversationTitle = '')) OR title = :title) ORDER BY timestamp DESC")
+    fun getConversationHistoryByPackageAndTitle(packageName: String, title: String): Flow<List<NotificationData>>
 
     /** Queries notifications matching a title or content search term ordered by timestamp descending. */
     @Query("SELECT * FROM notifications WHERE title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%' ORDER BY timestamp DESC")

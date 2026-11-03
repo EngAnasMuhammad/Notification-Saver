@@ -1,6 +1,6 @@
 package com.anasdev.notificationsaver.presentation.ui.screens
 
-import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -55,7 +55,6 @@ import com.anasdev.notificationsaver.presentation.ui.components.AppIconCache
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppFilterScreen(
-    pm: PackageManager,
     onBackClick: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -137,7 +136,6 @@ fun AppFilterScreen(
                     ) { appItem ->
                         AppFilterRowItem(
                             item = appItem,
-                            pm = pm,
                             onToggle = { isAllowed: Boolean ->
                                 viewModel.onToggleBlacklist(appItem.packageName, !isAllowed)
                             }
@@ -179,12 +177,12 @@ fun AppFilterScreen(
 @Composable
 fun AppFilterRowItem(
     item: AppFilterItem,
-    pm: PackageManager,
     onToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val (appIcon, _) = remember(item.packageName) {
-        AppIconCache.getAppInfo(item.packageName, pm)
+        AppIconCache.getAppInfo(item.packageName, context)
     }
 
     val isAllowed = !item.isBlacklisted

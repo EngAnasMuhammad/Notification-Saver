@@ -77,6 +77,10 @@
     <string name="battery_warning_title">Battery Optimization Enabled</string>
     <string name="battery_warning_sub">The OS may kill this app in the background. Tap here to whitelist it.</string>
 
+    <!-- Date Grouping Headers -->
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+
     <string name="status_save">Save Notifications</string>
     <string name="status_ignored">Notifications Ignored</string>
     <string name="service_notification_title">Notification Saver Active</string>

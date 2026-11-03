@@ -1,17 +1,8 @@
 package com.anasdev.notificationsaver.presentation.ui.screens
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.Settings
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -79,12 +71,11 @@ import com.anasdev.notificationsaver.presentation.ui.components.PrivacyDisclaime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    pm: PackageManager,
     viewModel: NotificationViewModel,
     isBatteryOptimized: Boolean,
     onConversationClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
-    settingsViewModel: SettingsViewModel = hiltViewModel()
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val groupedUiState by viewModel.groupedUiState.collectAsStateWithLifecycle()
@@ -104,7 +95,7 @@ fun HomeScreen(
     if (pendingDeleteAppPackage != null) {
         val targetPkg = pendingDeleteAppPackage!!
         val appLabel = remember(targetPkg) {
-            AppIconCache.getAppInfo(targetPkg, pm).second
+            AppIconCache.getAppInfo(targetPkg, context).second
         }
         AlertDialog(
             onDismissRequest = { pendingDeleteAppPackage = null },
@@ -313,83 +304,63 @@ fun HomeScreen(
                                         AppHeaderItem(
                                             appGroup = appGroup,
                                             isExpanded = isAppExpanded,
-                                            pm = pm,
                                             onToggleExpand = { viewModel.toggleAppExpansion(appGroup.packageName) }
                                         )
                                     }
                                 }
 
-                                // Level 2: Conversation Rows with Smooth Expand/Collapse Animation
-                                item(
-                                    key = "app_convs_${appGroup.packageName}",
-                                    contentType = "conv_list"
-                                ) {
-                                    AnimatedVisibility(
-                                        visible = isAppExpanded,
-                                        enter = expandVertically(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                                stiffness = Spring.StiffnessMediumLow
-                                            )
-                                        ) + fadeIn(animationSpec = tween(300)),
-                                        exit = shrinkVertically(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                                stiffness = Spring.StiffnessMediumLow
-                                            )
-                                        ) + fadeOut(animationSpec = tween(300))
-                                    ) {
-                                        Column(
+                                // Level 2: Virtualized Conversation Rows with individual LazyColumn recycling
+                                if (isAppExpanded) {
+                                    items(
+                                        items = appGroup.conversations,
+                                        key = { "conv_${it.conversationKey}" },
+                                        contentType = { "conversation_row" }
+                                    ) { conversation ->
+                                        val dismissState = rememberSwipeToDismissBoxState()
+                                        LaunchedEffect(dismissState.targetValue) {
+                                            if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                                                pendingDeleteConversationKey = conversation.conversationKey
+                                                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                                            }
+                                        }
+
+                                        SwipeToDismissBox(
+                                            state = dismissState,
+                                            enableDismissFromStartToEnd = false,
+                                            enableDismissFromEndToStart = true,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(top = 4.dp)
-                                        ) {
-                                            appGroup.conversations.forEach { conversation ->
-                                                val dismissState = rememberSwipeToDismissBoxState()
-                                                LaunchedEffect(dismissState.targetValue) {
-                                                    if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-                                                        pendingDeleteConversationKey = conversation.conversationKey
-                                                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                                                    }
-                                                }
-
-                                                SwipeToDismissBox(
-                                                    state = dismissState,
-                                                    enableDismissFromStartToEnd = false,
-                                                    enableDismissFromEndToStart = true,
-                                                    backgroundContent = {
-                                                        val backgroundColor by animateColorAsState(
-                                                            targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-                                                                MaterialTheme.colorScheme.errorContainer
-                                                            } else {
-                                                                MaterialTheme.colorScheme.surface
-                                                            },
-                                                            label = "swipe_bg_color"
-                                                        )
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .fillMaxSize()
-                                                                .clip(RoundedCornerShape(16.dp))
-                                                                .background(backgroundColor)
-                                                                .padding(horizontal = 20.dp),
-                                                            contentAlignment = Alignment.CenterEnd
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = Icons.Rounded.DeleteOutline,
-                                                                contentDescription = stringResource(id = R.string.dialog_delete_conversation_title),
-                                                                tint = MaterialTheme.colorScheme.onErrorContainer
-                                                            )
-                                                        }
-                                                    }
+                                                .animateItem(),
+                                            backgroundContent = {
+                                                val backgroundColor by animateColorAsState(
+                                                    targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                                                        MaterialTheme.colorScheme.errorContainer
+                                                    } else {
+                                                        MaterialTheme.colorScheme.surface
+                                                    },
+                                                    label = "swipe_bg_color"
+                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .clip(RoundedCornerShape(16.dp))
+                                                        .background(backgroundColor)
+                                                        .padding(horizontal = 20.dp),
+                                                    contentAlignment = Alignment.CenterEnd
                                                 ) {
-                                                    ConversationRowItem(
-                                                        conversation = conversation,
-                                                        packageName = appGroup.packageName,
-                                                        pm = pm,
-                                                        onClick = { onConversationClick(conversation.conversationKey) }
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.DeleteOutline,
+                                                        contentDescription = stringResource(id = R.string.dialog_delete_conversation_title),
+                                                        tint = MaterialTheme.colorScheme.onErrorContainer
                                                     )
                                                 }
                                             }
+                                        ) {
+                                            ConversationRowItem(
+                                                conversation = conversation,
+                                                packageName = appGroup.packageName,
+                                                onClick = { onConversationClick(conversation.conversationKey) }
+                                            )
                                         }
                                     }
                                 }
