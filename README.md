@@ -1,7 +1,7 @@
 # 🔔 Notification Saver
 
 [![Android CI](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/EngAnasMuhammad/Notification-Saver/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-2.3.2-brightgreen.svg)
+![Version](https://img.shields.io/badge/Version-2.3.3-brightgreen.svg)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-blue.svg?logo=kotlin)
 ![Min SDK](https://img.shields.io/badge/Min%20SDK-26%20(Android%208.0)-brightgreen.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-orange.svg)
@@ -131,8 +131,8 @@
 * **Continuous Integration (`ci.yml`):** Runs `./gradlew assembleDebug` on every push and pull request to `main`/`master`.
 * **Continuous Deployment (`cd.yml`):** Automatically decodes release keystore credentials from repository secrets, builds an optimized release APK (`./gradlew assembleRelease`), and publishes a GitHub Release when a version tag (`v*`) is pushed:
   ```bash
-  git tag -a v2.3.2 -m "Release v2.3.2"
-  git push origin master v2.3.2
+  git tag -a v2.3.3 -m "Release v2.3.3"
+  git push origin master v2.3.3
   ```
 
 ---

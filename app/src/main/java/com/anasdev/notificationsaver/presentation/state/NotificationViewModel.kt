@@ -123,11 +123,7 @@ class NotificationViewModel @Inject constructor(
     fun rebindListenerService() {
         pruneOldNotifications()
         if (checkNotificationPermission()) {
-            val isBound = NotificationListenerService.isConnected
-            NotificationListenerService.rebindService(
-                context,
-                useComponentFallback = !isBound
-            )
+            NotificationListenerService.rebindService(context)
         }
     }
 }
