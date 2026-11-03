@@ -28,18 +28,29 @@ jobs:
         run: chmod +x gradlew
 
       - name: Set up Release Keystore
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > release-keystore.jks
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "RELEASE_KEYSTORE_BASE64 is empty. Skipping release keystore setup."
+            exit 0
+          fi
+
+          echo "$KEYSTORE_BASE64" | tr -d '\r\n ' | base64 --decode > release-keystore.jks
+
           if [ ! -s release-keystore.jks ]; then
-            echo "Error: release-keystore.jks is empty after base64 decoding! Check RELEASE_KEYSTORE_BASE64 secret."
+            echo "::error::release-keystore.jks is empty after base64 decoding! Verify RELEASE_KEYSTORE_BASE64."
             exit 1
           fi
+
+          if [ -z "$KEY_ALIAS" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::RELEASE_KEY_ALIAS or RELEASE_KEYSTORE_PASSWORD is missing in GitHub Secrets!"
+            exit 1
+          fi
+
           cat <<EOF > keystore.properties
           storeFile=release-keystore.jks
           storePassword=$KEYSTORE_PASSWORD
